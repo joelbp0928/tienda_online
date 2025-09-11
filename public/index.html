@@ -63,4 +63,134 @@
           <h1 class="display-5 fw-bold lh-1 mb-3">Playeras & accesorios <span class="grad">en tendencia</span></h1>
           <p class="lead text-muted">Diseños inspirados en música, cultura pop y eventos. Personaliza con tu nombre o fecha.</p>
           <div class="d-flex gap-2">
-            <a href="/catalogo.html" class="btn btn-dark b
+            <a href="/catalogo.html" class="btn btn-dark btn-lg">Ver catálogo</a>
+            <a href="/drops.html" class="btn btn-outline-dark btn-lg">Últimos drops</a>
+          </div>
+          <div class="mt-4 d-flex flex-wrap gap-2">
+            <span class="badge rounded-pill trend">K-pop</span>
+            <span class="badge rounded-pill trend">Indie MX</span>
+            <span class="badge rounded-pill trend">Festivales</span>
+            <span class="badge rounded-pill trend">Anime</span>
+            <span class="badge rounded-pill trend">Series</span>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="hero-card shadow-sm">
+            <!-- imagen de portada o collage -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categorías rápidas -->
+  <section class="py-4 bg-white border-top border-bottom">
+    <div class="container">
+      <div class="row text-center g-3">
+        <div class="col-6 col-md-3">
+          <a class="cat-card" href="/catalogo.html?cat=playeras">
+            <i class="bi bi-tshirt"></i><span>Playeras</span>
+          </a>
+        </div>
+        <div class="col-6 col-md-3">
+          <a class="cat-card" href="/catalogo.html?cat=gorras">
+            <i class="bi bi-capsule-pill"></i><span>Gorras</span>
+          </a>
+        </div>
+        <div class="col-6 col-md-3">
+          <a class="cat-card" href="/catalogo.html?cat=tote">
+            <i class="bi bi-bag"></i><span>Tote bags</span>
+          </a>
+        </div>
+        <div class="col-6 col-md-3">
+          <a class="cat-card" href="/catalogo.html?cat=stickers">
+            <i class="bi bi-stars"></i><span>Stickers</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Grid de productos (destacados) -->
+  <section class="py-5">
+    <div class="container">
+      <div class="d-flex align-items-end justify-content-between mb-3">
+        <div>
+          <h2 class="h4 mb-0">Destacados</h2>
+          <p class="text-muted small mb-0">Basado en tendencia y disponibilidad</p>
+        </div>
+        <a href="/catalogo.html" class="btn btn-sm btn-outline-dark">Ver todo</a>
+      </div>
+
+      <div id="productGrid" class="row g-3">
+        <!-- JS inyecta cards -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="newsletter py-5">
+    <div class="container">
+      <div class="row align-items-center g-3">
+        <div class="col-lg-6">
+          <h3 class="h4 mb-1">Únete al drop list</h3>
+          <p class="text-muted mb-0">Sé el primero en enterarte de colecciones y cupones.</p>
+        </div>
+        <div class="col-lg-6">
+          <form class="d-flex gap-2" id="formNews" onsubmit="return false;">
+            <input type="email" id="newsEmail" class="form-control" placeholder="tu@email.com" required>
+            <button class="btn btn-dark">Suscribirme</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-5 bg-dark text-light">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <h5 class="mb-3">TIENDA</h5>
+          <p class="small text-white-50">Diseño independiente desde CDMX. Personalización rápida y envíos nacionales.</p>
+        </div>
+        <div class="col-md-2">
+          <h6>Explorar</h6>
+          <ul class="list-unstyled small">
+            <li><a class="text-white-50 link-light" href="/catalogo.html">Catálogo</a></li>
+            <li><a class="text-white-50 link-light" href="/drops.html">Drops</a></li>
+            <li><a class="text-white-50 link-light" href="/faq.html">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3">
+          <h6>Soporte</h6>
+          <ul class="list-unstyled small">
+            <li><a class="text-white-50 link-light" href="/envios.html">Envíos</a></li>
+            <li><a class="text-white-50 link-light" href="/devoluciones.html">Devoluciones</a></li>
+            <li><a class="text-white-50 link-light" href="/terminos.html">Términos</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3">
+          <h6>Síguenos</h6>
+          <div class="d-flex gap-3 fs-5">
+            <a class="text-white-50" href="#"><i class="bi bi-instagram"></i></a>
+            <a class="text-white-50" href="#"><i class="bi bi-tiktok"></i></a>
+            <a class="text-white-50" href="#"><i class="bi bi-facebook"></i></a>
+          </div>
+        </div>
+      </div>
+      <hr class="border-secondary my-4">
+      <div class="d-flex justify-content-between small text-white-50">
+        <span>© <span id="y"></span> Tienda. Todos los derechos reservados.</span>
+        <span>Hecho con ♥ en CDMX</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- App -->
+  <script src="/assets/js/main.js" type="module"></script>
+</body>
+</html>
