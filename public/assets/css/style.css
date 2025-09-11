@@ -1,0 +1,25 @@
+:root{
+  --brand:#111827;         /* gris muy oscuro */
+  --brand-2:#e11d48;       /* rosa/frambuesa */
+  --muted:#6b7280;
+}
+body{ scroll-behavior:smooth; }
+.topbar{ background:#f3f4f6; color:#111827; }
+.hero{ background:linear-gradient(180deg,#fff, #f8fafc 60%); }
+.grad{ background:linear-gradient(90deg,var(--brand-2),#8b5cf6);
+       -webkit-background-clip:text; background-clip:text; color:transparent; }
+.trend{ background:#111827; color:#fff; }
+.hero-card{ aspect-ratio: 4/3; background:#fff url('/assets/img/hero-placeholder.jpg') center/cover no-repeat; border-radius:1rem; }
+.cat-card{
+  display:flex; flex-direction:column; align-items:center; gap:.5rem;
+  background:#fff; border:1px solid #e5e7eb; border-radius:.75rem; padding:1rem;
+  color:#111827; text-decoration:none; transition:all .2s;
+}
+.cat-card:hover{ transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.06); }
+.cat-card i{ font-size:1.75rem; }
+
+.card-product .price{ font-weight:600; }
+.card-product .badge-drop{ position:absolute; top:.5rem; left:.5rem; }
+
+.newsletter{ background:#111827; color:#fff; }
+.newsletter .form-control{ background:#fff; }
