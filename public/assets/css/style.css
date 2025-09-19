@@ -1,25 +1,111 @@
-:root{
-  --brand:#111827;         /* gris muy oscuro */
-  --brand-2:#e11d48;       /* rosa/frambuesa */
-  --muted:#6b7280;
+:root {
+  --bg: #0a0a0f;         /* fondo principal */
+  --elev: #1a1b26;       /* superficies (tarjetas, navbar) */
+  --text: #f8fafc;       /* texto principal */
+  --muted: #9ca3af;      /* texto secundario */
+  --accent: #ff3b5c;     /* rojo/rosa vibrante */
+  --accent-2: #22d3ee;   /* cian eléctrico */
+  --border: #2d2f3a;     /* bordes discretos */
 }
-body{ scroll-behavior:smooth; }
-.topbar{ background:#f3f4f6; color:#111827; }
-.hero{ background:linear-gradient(180deg,#fff, #f8fafc 60%); }
-.grad{ background:linear-gradient(90deg,var(--brand-2),#8b5cf6);
-       -webkit-background-clip:text; background-clip:text; color:transparent; }
-.trend{ background:#111827; color:#fff; }
-.hero-card{ aspect-ratio: 4/3; background:#fff url('/assets/img/hero-placeholder.jpg') center/cover no-repeat; border-radius:1rem; }
-.cat-card{
-  display:flex; flex-direction:column; align-items:center; gap:.5rem;
-  background:#fff; border:1px solid #e5e7eb; border-radius:.75rem; padding:1rem;
-  color:#111827; text-decoration:none; transition:all .2s;
+
+
+body {
+  scroll-behavior: smooth;
 }
-.cat-card:hover{ transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.06); }
-.cat-card i{ font-size:1.75rem; }
+.topbar {
+  background: #f3f4f6;
+  color: #111827;
+}
+.grad {
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-2) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 5s ease-in-out infinite;
+}
 
-.card-product .price{ font-weight:600; }
-.card-product .badge-drop{ position:absolute; top:.5rem; left:.5rem; }
+.trend {
+  background: #111827;
+  color: #fff;
+}
+.hero {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 59, 92, 0.15),
+    rgba(34, 211, 238, 0.15)
+  ), var(--bg);
+  color: var(--text);
+}
 
-.newsletter{ background:#111827; color:#fff; }
-.newsletter .form-control{ background:#fff; }
+.hero-card {
+  border-radius: 1rem;
+  min-height: 320px;
+  background: linear-gradient(135deg, rgba(255,59,92,.25), rgba(34,211,238,.25));
+  border: 1px solid var(--border);
+}
+
+.cat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+  background: var(--elev);
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  padding: 1rem;
+  color: var(--text);
+  text-decoration: none;
+  transition: all .2s;
+}
+.cat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.cat-card i {
+  font-size: 1.75rem;
+  color: var(--accent);
+}
+
+.badge.tag {
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+}
+
+.card-product .price {
+  font-weight: 600;
+}
+.card-product .badge-drop {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+}
+
+.newsletter {
+  background: #111827;
+  color: #fff;
+}
+.newsletter .form-control {
+  background: #fff;
+}
+
+.text-muted {
+  color: var(--text) !important;
+}
+
+.badge.trend {
+  background: var(--accent);
+  color: #fff;
+}
+
+.icon {
+  font-size: 1.75rem;   /* tamaño uniforme */
+  line-height: 1;
+  vertical-align: -0.125em;
+  color: currentColor;
+}
+
+.activo{
+  color: var(--accent);
+}
