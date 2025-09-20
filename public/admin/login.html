@@ -99,7 +99,7 @@
 
               <hr class="border-secondary my-4" />
               <div class="text-center">
-                <a href="../public/index.html" class="link-light"
+                <a href="../index.html" class="link-light"
                   >← Volver a la tienda</a
                 >
               </div>
@@ -111,7 +111,7 @@
     </div>
 
     <script type="module">
-      import supabase from "../public/js/supabase-config.js";
+      import supabase from "../js/supabase-config.js";
 
       const msg = (t) => (document.getElementById("msg").textContent = t || "");
 
@@ -125,7 +125,7 @@
             "whoami_role"
           );
           if (!roleErr && ["admin", "owner"].includes(role)) {
-            location.href = "/admin/admin.html";
+            location.href = "admin.html";
             return;
           }
         }
@@ -160,7 +160,7 @@
             await supabase.auth.signOut();
             return;
           }
-          location.href = "/admin/admin.html";
+          location.href = "admin.html";
         });
 
       document
