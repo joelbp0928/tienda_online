@@ -73,7 +73,7 @@ function render({ product, images, variants }) {
         </div>
 
         <div class="mt-4">
-          <a class="btn btn-outline-light btn-sm" href="/catalogo.html">Seguir comprando</a>
+          <a class="btn btn-outline-light btn-sm" href="./catalogo.html">Seguir comprando</a>
         </div>
       </div>
     </div>
