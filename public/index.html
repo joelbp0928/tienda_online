@@ -37,7 +37,8 @@
     <!-- Styles -->
     <link rel="stylesheet" href="assets/css/style.css" />
   </head>
-<body class="bg-dark text-light">
+  <body class="bg-dark text-light">
+    
     <!-- Topbar promo -->
     <div class="topbar text-center small py-2">
       <span class="fw-semibold">Drop de la semana:</span> Promo de la Pame 😎 –
@@ -45,14 +46,19 @@
     </div>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg bg-elev border-bottom sticky-top">
+    <nav
+      class="navbar navbar-expand-lg navbar-dark bg-elev border-bottom sticky-top"
+    >
       <div class="container">
-        <a class="navbar-brand d-flex align-items-center gap-2 text-muted" href="/">
+        <a
+          class="navbar-brand d-flex align-items-center gap-2 text-muted"
+          href="./"
+        >
           <img src="/assets/img/logo.svg" alt="Logo" height="28" />
           <span class="fw-bold">TIENDA</span>
         </a>
         <button
-          class="navbar-toggler"
+          class="navbar-toggler text-muted"
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navMain"
@@ -65,7 +71,9 @@
               <a class="nav-link activo" href="/public/">Inicio</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link text-light" href="/catalogo.html">Catálogo</a>
+              <a class="nav-link text-light" href="./assets/html/catalogo.html"
+                >Catálogo</a
+              >
             </li>
             <li class="nav-item">
               <a class="nav-link text-light" href="/drops.html">Drops</a>
@@ -85,7 +93,10 @@
               <i class="bi bi-search"></i>
             </button>
           </form>
-          <a href="/carrito.html" class="btn btn-outline-dark text-muted btn-sm ms-3">
+          <a
+            href="/carrito.html"
+            class="btn btn-outline-dark text-muted btn-sm ms-3"
+          >
             <i class="bi bi-bag"></i>
             <span id="cartCount" class="badge text-bg-dark ms-1">0</span>
           </a>
@@ -109,7 +120,9 @@
               <a href="/catalogo.html" class="btn btn-dark btn-lg"
                 >Ver catálogo</a
               >
-              <a href="/drops.html" class="btn btn-outline-dark text-muted btn-lg"
+              <a
+                href="/drops.html"
+                class="btn btn-outline-dark text-muted btn-lg"
                 >Últimos drops</a
               >
             </div>
