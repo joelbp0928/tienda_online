@@ -1,5 +1,7 @@
 import supabase from './supabase-config.js';
 
+import "./chatBot.js";
+
 const $ = (sel) => document.querySelector(sel);
 const money = v => new Intl.NumberFormat('es-MX', { style:'currency', currency:'MXN' }).format(v);
 

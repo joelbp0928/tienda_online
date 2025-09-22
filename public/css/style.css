@@ -3,8 +3,8 @@
   --elev: #1a1b26;       /* superficies (tarjetas, navbar) */
   --text: #f8fafc;       /* texto principal */
   --muted: #9ca3af;      /* texto secundario */
-  --accent: #ff3b5c;     /* rojo/rosa vibrante */
-  --accent-2: #22d3ee;   /* cian eléctrico */
+  --accent: #c50021b5;     /* rojo/rosa vibrante */
+  --accent-2: #1a8fa1b7;   /* cian eléctrico */
   --border: #2d2f3a;     /* bordes discretos */
 }
 
@@ -108,4 +108,56 @@ body {
 
 .activo{
   color: var(--accent);
+}
+
+/* Chatbot floating button */
+.chatbot-btn {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1080;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+/* Panel */
+.chatbot-header {
+  position: sticky;
+  top: 0;
+  background: #0b0b0b;
+  z-index: 2;
+}
+
+.chatbot-messages {
+  height: 45vh;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.msg {
+  max-width: 85%;
+  padding: .55rem .75rem;
+  border-radius: .75rem;
+  margin-bottom: .5rem;
+  font-size: .95rem;
+}
+.msg.bot  { background:#121212; border:1px solid #222; color:#e9ecef; }
+.msg.me   { background:#1f2937; border:1px solid #2b3443; color:#e9ecef; margin-left:auto; }
+
+.quick-chip {
+  border: 1px solid #2a2a2a;
+  background: transparent;
+  color: #e9ecef;
+  border-radius: 999px;
+  padding: .35rem .7rem;
+  font-size: .85rem;
+}
+.quick-chip:hover { background: #1b1b1b; }
+
+.navbar.bg-elev {
+  background-color: var(--elev);  /* o el color que quieras */
 }

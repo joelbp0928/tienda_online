@@ -1,3 +1,4 @@
+import "./chatBot.js";
 // Datos fake para maquetación. Luego los traeremos de Supabase.
 const MOCK_PRODUCTS = [
   { id:1, name:"K-pop Neon Tee", price:34900, img:"/assets/img/p1.jpg", tag:"Nuevo" },

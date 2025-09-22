@@ -38,7 +38,6 @@
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body class="bg-dark text-light">
-    
     <!-- Topbar promo -->
     <div class="topbar text-center small py-2">
       <span class="fw-semibold">Drop de la semana:</span> Promo de la Pame 😎 –
@@ -287,6 +286,144 @@
         </div>
       </div>
     </footer>
+    <!-- Chatbot: botón flotante -->
+    <button
+      class="btn btn-dark chatbot-btn"
+      data-bs-toggle="offcanvas"
+      data-bs-target="#chatbotPanel"
+      aria-label="Abrir chat"
+    >
+      <i class="bi bi-chat-dots fs-5"></i>
+    </button>
+
+    <!-- Chatbot: panel offcanvas -->
+    <div
+      class="offcanvas offcanvas-end text-bg-dark"
+      tabindex="-1"
+      id="chatbotPanel"
+      style="--bs-offcanvas-width: 380px"
+    >
+      <div class="offcanvas-header chatbot-header border-bottom">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-robot fs-4 text-white-50"></i>
+          <div>
+            <div class="fw-semibold">Asistente Tienda</div>
+            <small class="text-white-50">Resuelve dudas frecuentes</small>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="offcanvas"
+          aria-label="Cerrar"
+        ></button>
+      </div>
+
+      <div class="offcanvas-body d-flex flex-column">
+        <!-- FAQs (acordeón) -->
+        <div class="mb-3">
+          <div class="accordion accordion-flush" id="faqAcc">
+            <div class="accordion-item bg-dark text-light border-secondary">
+              <h2 class="accordion-header">
+                <button
+                  class="accordion-button collapsed bg-dark text-light"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#faq1"
+                >
+                  ¿Cuánto tarda el envío?
+                </button>
+              </h2>
+              <div
+                id="faq1"
+                class="accordion-collapse collapse"
+                data-bs-parent="#faqAcc"
+              >
+                <div class="accordion-body text-white-50">
+                  CDMX 24–48h. Interior de la república 3–5 días hábiles.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item bg-dark text-light border-secondary">
+              <h2 class="accordion-header">
+                <button
+                  class="accordion-button collapsed bg-dark text-light"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#faq2"
+                >
+                  ¿Cómo elijo mi talla?
+                </button>
+              </h2>
+              <div
+                id="faq2"
+                class="accordion-collapse collapse"
+                data-bs-parent="#faqAcc"
+              >
+                <div class="accordion-body text-white-50">
+                  Las playeras son unisex corte regular. Si estás entre tallas,
+                  elige la mayor.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item bg-dark text-light border-secondary">
+              <h2 class="accordion-header">
+                <button
+                  class="accordion-button collapsed bg-dark text-light"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#faq3"
+                >
+                  ¿Aceptan devoluciones?
+                </button>
+              </h2>
+              <div
+                id="faq3"
+                class="accordion-collapse collapse"
+                data-bs-parent="#faqAcc"
+              >
+                <div class="accordion-body text-white-50">
+                  Sí, dentro de 7 días posteriores a la entrega (aplican
+                  condiciones).
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div id="chatMessages" class="chatbot-messages mb-3">
+          <div class="msg bot">
+            ¡Hola! Soy el asistente de la tienda 👋 ¿En qué te ayudo?
+          </div>
+        </div>
+
+        <!-- Sugerencias rápidas -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button class="quick-chip" data-q="¿Costos de envío?">
+            ¿Costos de envío?
+          </button>
+          <button class="quick-chip" data-q="Guía de tallas">
+            Guía de tallas
+          </button>
+          <button class="quick-chip" data-q="Estado de mi pedido">
+            Estado de mi pedido
+          </button>
+        </div>
+
+        <!-- Input -->
+        <form id="chatForm" class="d-flex gap-2 mt-auto" autocomplete="off">
+          <input
+            id="chatInput"
+            class="form-control form-control-sm"
+            placeholder="Escribe tu pregunta…"
+          />
+          <button class="btn btn-light btn-sm">
+            <i class="bi bi-send"></i>
+          </button>
+        </form>
+      </div>
+    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
