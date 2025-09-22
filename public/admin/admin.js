@@ -1,5 +1,5 @@
-// /admin/admin.js
 import supabase from '../js/supabase-config.js';
+import { listCategories } from './categorias.js';
 
 // ---- Guard ----
 async function requireAdmin() {
@@ -8,7 +8,7 @@ async function requireAdmin() {
 
   // Verifica rol por RPC (no por select directo)
   const { data: role, error: roleErr } = await supabase.rpc('whoami_role');
-  if (roleErr || !role || !['admin','owner'].includes(role)) {
+  if (roleErr || !role || !['admin', 'owner'].includes(role)) {
     await supabase.auth.signOut();
     location.href = 'login.html';
     return null;
@@ -16,23 +16,39 @@ async function requireAdmin() {
   return { user, profile: { email: user.email, role } };
 }
 
+// ---- Inicio ----
+(async () => {
+  const ctx = await requireAdmin();
+  if (!ctx) return;
+
+  document.getElementById('btnLogout').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    location.href = 'login.html';
+  });
+
+  await loadCategories();
+  await listUsers();
+  await listProducts();
+  await listCategories();
+})();
+
 // ---- UI helpers ----
-const $msg = (t='') => document.getElementById('msg').textContent = t;
+const $msg = (t = '') => document.getElementById('msg').textContent = t;
 
 // ---- Usuarios ----
-async function listUsers(){
+async function listUsers() {
   const { data: list, error } = await supabase
     .from('profiles')
     .select('id,email,role,status,created_at')
-    .order('created_at', { ascending:false });
+    .order('created_at', { ascending: false });
 
   if (error) { $msg(error.message); return; }
 
   const wrap = document.getElementById('users');
   wrap.innerHTML = '';
-  if(!list?.length){ wrap.innerHTML = '<p class="text-secondary">Sin usuarios.</p>'; return; }
+  if (!list?.length) { wrap.innerHTML = '<p class="text-secondary">Sin usuarios.</p>'; return; }
 
-  for(const u of list){
+  for (const u of list) {
     const row = document.createElement('div');
     row.className = 'd-flex align-items-center justify-content-between border-bottom border-secondary py-2';
     row.innerHTML = `
@@ -41,15 +57,15 @@ async function listUsers(){
         <div class="text-secondary">${u.role} · ${new Date(u.created_at).toLocaleString()}</div>
       </div>
       <div class="d-flex gap-2">
-        ${['client','staff','admin','owner'].map(r =>
-          `<button class="btn btn-sm ${u.role===r?'btn-light':'btn-outline-light'}" data-action="setRole" data-id="${u.id}" data-role="${r}">${r}</button>`
-        ).join('')}
+        ${['client', 'staff', 'admin', 'owner'].map(r =>
+      `<button class="btn btn-sm ${u.role === r ? 'btn-light' : 'btn-outline-light'}" data-action="setRole" data-id="${u.id}" data-role="${r}">${r}</button>`
+    ).join('')}
       </div>`;
     wrap.appendChild(row);
   }
 
-  wrap.querySelectorAll('button[data-action="setRole"]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
+  wrap.querySelectorAll('button[data-action="setRole"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
       const id = btn.dataset.id;
       const role = btn.dataset.role;
       await setRole(id, role);
@@ -57,7 +73,7 @@ async function listUsers(){
   });
 }
 
-async function setRole(userId, role){
+async function setRole(userId, role) {
   // Sólo permite si yo soy owner o admin (el guard ya lo valida)
   const { error } = await supabase.from('profiles').update({ role }).eq('id', userId);
   if (error) return $msg(error.message);
@@ -71,11 +87,11 @@ let CATEGORIES = [];
 // Utilidad: slug
 const slugify = s => s
   .toLowerCase()
-  .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // quita acentos
-  .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita acentos
+  .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
 // Carga categorías para el <select>
-async function loadCategories(){
+async function loadCategories() {
   const { data, error } = await supabase.from('categories').select('id,name,slug').order('name');
   if (error) { $msg(error.message); return; }
   CATEGORIES = data || [];
@@ -84,11 +100,11 @@ async function loadCategories(){
 }
 
 // Listado de productos con acciones
-async function listProducts(){
+async function listProducts() {
   const { data, error } = await supabase
     .from('products')
     .select('id,slug,name,is_active,created_at')
-    .order('id', { ascending:false })
+    .order('id', { ascending: false })
     .limit(50);
   const wrap = document.getElementById('products');
   if (error) { wrap.innerHTML = `<div class="text-warning">${error.message}</div>`; return; }
@@ -100,20 +116,21 @@ async function listProducts(){
         <tr><th>ID</th><th>Slug</th><th>Nombre</th><th>Activo</th><th>Creado</th><th class="text-end">Acciones</th></tr>
       </thead>
       <tbody>
-      ${data.map(p=>`
+      ${data.map(p => `
         <tr>
           <td>${p.id}</td>
           <td>${p.slug}</td>
           <td>${p.name}</td>
-          <td>${p.is_active ? 'Sí':'No'}</td>
+          <td>${p.is_active ? 'Sí' : 'No'}</td>
           <td>${new Date(p.created_at).toLocaleString()}</td>
           <td class="text-end">
             <button class="btn btn-sm btn-outline-light me-1" data-action="edit" data-id="${p.id}">Editar</button>
             <button class="btn btn-sm btn-outline-light me-1" data-action="variant" data-id="${p.id}">Variante +</button>
             <button class="btn btn-sm btn-outline-light me-1" data-action="image" data-id="${p.id}">Imagen +</button>
-            <button class="btn btn-sm ${p.is_active?'btn-outline-warning':'btn-outline-success'}" data-action="toggle" data-id="${p.id}">
-              ${p.is_active?'Desactivar':'Activar'}
+            <button class="btn btn-sm ${p.is_active ? 'btn-outline-warning' : 'btn-outline-success'}" data-action="toggle" data-id="${p.id}">
+              ${p.is_active ? 'Desactivar' : 'Activar'}
             </button>
+            <button class="btn btn-sm btn-outline-danger ms-1" data-action="delete" data-id="${p.id}">Eliminar</button>
           </td>
         </tr>`).join('')}
       </tbody>
@@ -121,34 +138,35 @@ async function listProducts(){
   </div>`;
 
   // Handlers de acciones
-  wrap.querySelectorAll('button[data-action]').forEach(btn=>{
+  wrap.querySelectorAll('button[data-action]').forEach(btn => {
     const id = Number(btn.dataset.id);
     const action = btn.dataset.action;
-    if (action==='edit') btn.onclick = () => openProductModal(id);
-    if (action==='variant') btn.onclick = () => openVariantModal(id);
-    if (action==='image') btn.onclick = () => openImageModal(id);
-    if (action==='toggle') btn.onclick = () => toggleProduct(id);
+    if (action === 'edit') btn.onclick = () => openProductModal(id);
+    if (action === 'variant') btn.onclick = () => openVariantModal(id);
+    if (action === 'image') btn.onclick = () => openImageModal(id);
+    if (action === 'toggle') btn.onclick = () => toggleProduct(id);
+    if (action === 'delete') btn.onclick = () => deleteProduct(id);
   });
 }
 
 // ----- PRODUCTO -----
 const productModal = new bootstrap.Modal(document.getElementById('modalProduct'));
-document.getElementById('btnNewProduct').addEventListener('click', ()=> openProductModal());
+document.getElementById('btnNewProduct').addEventListener('click', () => openProductModal());
 
-document.getElementById('prodName').addEventListener('input', (e)=>{
+document.getElementById('prodName').addEventListener('input', (e) => {
   const v = e.target.value;
   if (!document.getElementById('prodId').value) {
     document.getElementById('prodSlug').value = slugify(v);
   }
 });
 
-async function openProductModal(id){
+async function openProductModal(id) {
   await loadCategories();
   document.getElementById('formProduct').reset();
   document.getElementById('prodId').value = id || '';
   document.getElementById('titleProduct').textContent = id ? 'Editar producto' : 'Nuevo producto';
 
-  if (id){
+  if (id) {
     const { data, error } = await supabase.from('products')
       .select('id,name,slug,description,category_id,is_active').eq('id', id).single();
     if (error) return $msg(error.message);
@@ -166,7 +184,7 @@ async function openProductModal(id){
 
 document.getElementById('formProduct').addEventListener('submit', saveProduct);
 
-async function saveProduct(e){
+async function saveProduct(e) {
   e.preventDefault(); $msg('');
   const id = document.getElementById('prodId').value;
   const payload = {
@@ -178,7 +196,7 @@ async function saveProduct(e){
   };
 
   let error;
-  if (id){
+  if (id) {
     ({ error } = await supabase.from('products').update(payload).eq('id', Number(id)));
   } else {
     ({ error } = await supabase.from('products').insert([payload]));
@@ -189,7 +207,7 @@ async function saveProduct(e){
   await listProducts();
 }
 
-async function toggleProduct(id){
+async function toggleProduct(id) {
   const { data, error } = await supabase.from('products').select('is_active').eq('id', id).single();
   if (error) return $msg(error.message);
   const { error: e2 } = await supabase.from('products').update({ is_active: !data.is_active }).eq('id', id);
@@ -200,17 +218,17 @@ async function toggleProduct(id){
 // ----- VARIANTE -----
 const variantModal = new bootstrap.Modal(document.getElementById('modalVariant'));
 
-function openVariantModal(productId){
+function openVariantModal(productId) {
   document.getElementById('formVariant').reset();
   document.getElementById('varProductId').value = productId;
   document.getElementById('varActive').checked = true;
   variantModal.show();
 }
 
-document.getElementById('formVariant').addEventListener('submit', async (e)=>{
+document.getElementById('formVariant').addEventListener('submit', async (e) => {
   e.preventDefault(); $msg('');
   const product_id = Number(document.getElementById('varProductId').value);
-  const size  = document.getElementById('varSize').value.trim() || null;
+  const size = document.getElementById('varSize').value.trim() || null;
   const color = document.getElementById('varColor').value.trim() || null;
   const price = Number(document.getElementById('varPrice').value);
   const stock = Number(document.getElementById('varStock').value);
@@ -225,14 +243,14 @@ document.getElementById('formVariant').addEventListener('submit', async (e)=>{
 // ----- IMAGEN -----
 const imageModal = new bootstrap.Modal(document.getElementById('modalImage'));
 
-function openImageModal(productId){
+function openImageModal(productId) {
   document.getElementById('formImage').reset();
   document.getElementById('imgProductId').value = productId;
   document.getElementById('imgOrder').value = 0;
   imageModal.show();
 }
 
-document.getElementById('formImage').addEventListener('submit', async (e)=>{
+document.getElementById('formImage').addEventListener('submit', async (e) => {
   e.preventDefault(); $msg('');
   const product_id = Number(document.getElementById('imgProductId').value);
   const file = document.getElementById('imgFile').files[0];
@@ -256,31 +274,33 @@ document.getElementById('formImage').addEventListener('submit', async (e)=>{
   await listProducts();
 });
 
-// ---- Inicio/boot ----
-(async ()=>{
-  const ctx = await requireAdmin(); // tu guard actual
-  if (!ctx) return;
+// ---- Eliminar producto ----
+async function deleteProduct(id) {
+  try {
+    // Opcional: contamos variantes e imágenes para avisarte
+    const { count: varCount } = await supabase
+      .from('product_variants')
+      .select('id', { count: 'exact', head: true })
+      .eq('product_id', id);
 
-  document.getElementById('btnLogout').addEventListener('click', async ()=>{
-    await supabase.auth.signOut();
-    location.href = 'login.html';
-  });
+    const { count: imgCount } = await supabase
+      .from('product_images')
+      .select('id', { count: 'exact', head: true })
+      .eq('product_id', id);
 
-  await loadCategories();
-  await listProducts();
-})();
+    const ok = confirm(
+      `¿Eliminar el producto #${id}?` +
+      `\nSe eliminarán también ${varCount ?? 0} variante(s) y ${imgCount ?? 0} imagen(es).`
+    );
+    if (!ok) return;
 
+    // Borrado: variants & images tienen FK ON DELETE CASCADE, así que basta con borrar el producto
+    const { error } = await supabase.from('products').delete().eq('id', id);
+    if (error) return $msg(error.message);
 
-// ---- Inicio ----
-(async ()=>{
-  const ctx = await requireAdmin();
-  if (!ctx) return;
-
-  document.getElementById('btnLogout').addEventListener('click', async ()=>{
-    await supabase.auth.signOut();
-    location.href = 'login.html';
-  });
-
-  await listUsers();
-  await listProducts();
-})();
+    $msg('Producto eliminado.');
+    await listProducts();
+  } catch (e) {
+    $msg(String(e));
+  }
+}
