@@ -1,5 +1,12 @@
+import {
+  initCollectionsUI, listCollections, setCollectionsChangedCallback,
+  loadCollectionsSelect, getProductCollectionIds, setProductCollections
+} from './colecciones.js';
 import supabase from '../js/supabase-config.js';
 import { listCategories } from './categorias.js';
+
+let meId = null, myRole = null;
+let CAN_EDIT = true;
 
 // ---- Guard ----
 async function requireAdmin() {
@@ -8,11 +15,12 @@ async function requireAdmin() {
 
   // Verifica rol por RPC (no por select directo)
   const { data: role, error: roleErr } = await supabase.rpc('whoami_role');
-  if (roleErr || !role || !['admin', 'owner'].includes(role)) {
+  if (roleErr || !role || !['staff', 'admin', 'owner'].includes(role)) {
     await supabase.auth.signOut();
     location.href = 'login.html';
     return null;
   }
+  meId = user.id; myRole = role;    // <-- guarda para la UI
   return { user, profile: { email: user.email, role } };
 }
 
@@ -21,13 +29,26 @@ async function requireAdmin() {
   const ctx = await requireAdmin();
   if (!ctx) return;
 
+  // Limitar UI para staff (puede ver, no administrar usuarios)
+  CAN_EDIT = (myRole !== 'staff');
+
+  // Oculta la tarjeta de Usuarios
+  if (myRole === 'staff') {
+    const usersCard = document.getElementById('users')?.closest('.card');
+    if (usersCard) usersCard.style.display = 'none';
+    // Oculta botones "Nuevo" por si tus policies no permiten escribir
+    document.getElementById('btnNewProduct')?.classList.add('d-none');
+    document.getElementById('btnNewCategory')?.classList.add('d-none');
+  }
+
+
   document.getElementById('btnLogout').addEventListener('click', async () => {
     await supabase.auth.signOut();
     location.href = 'login.html';
   });
 
   await loadCategories();
-  await listUsers();
+  if (myRole !== 'staff') await listUsers();
   await listProducts();
   await listCategories();
 })();
@@ -49,6 +70,11 @@ async function listUsers() {
   if (!list?.length) { wrap.innerHTML = '<p class="text-secondary">Sin usuarios.</p>'; return; }
 
   for (const u of list) {
+    const canDelete =
+      ['admin', 'owner'].includes(myRole) &&          // yo soy admin/owner
+      meId !== u.id &&                                // no yo mismo
+      !(u.role === 'owner' && myRole !== 'owner');    // solo owner borra owner
+
     const row = document.createElement('div');
     row.className = 'd-flex align-items-center justify-content-between border-bottom border-secondary py-2';
     row.innerHTML = `
@@ -60,9 +86,25 @@ async function listUsers() {
         ${['client', 'staff', 'admin', 'owner'].map(r =>
       `<button class="btn btn-sm ${u.role === r ? 'btn-light' : 'btn-outline-light'}" data-action="setRole" data-id="${u.id}" data-role="${r}">${r}</button>`
     ).join('')}
+     ${canDelete ? `
+          <button class="btn btn-sm btn-outline-danger"
+                  data-action="delUser" data-id="${u.id}" data-email="${u.email}">Eliminar</button>` : ''}
       </div>`;
     wrap.appendChild(row);
   }
+  // roles
+  wrap.querySelectorAll('button[data-action="setRole"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await setRole(btn.dataset.id, btn.dataset.role);
+    });
+  });
+
+  // eliminar
+  wrap.querySelectorAll('button[data-action="delUser"]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await deleteUser(btn.dataset.id, btn.dataset.email);
+    });
+  });
 
   wrap.querySelectorAll('button[data-action="setRole"]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -81,6 +123,28 @@ async function setRole(userId, role) {
   listUsers();
 }
 
+async function deleteUser(userId, email) {
+  try {
+    const { data: { user: me } } = await supabase.auth.getUser();
+    if (me && me.id === userId) return $msg('No puedes eliminarte a ti mismo.');
+
+    const ok = confirm(`¿Eliminar al usuario ${email || userId} de forma permanente?\nEsta acción no se puede deshacer.`);
+    if (!ok) return;
+
+    const { data, error } = await supabase.rpc('admin_delete_user', { target_user: userId });
+    if (error) {
+      // Si ves 404 aquí, la función no es visible para tu rol:
+      // revisa GRANT EXECUTE y que esté en el schema public (paso A).
+      return $msg(`Error al eliminar: ${error.message}`);
+    }
+
+    $msg('Usuario eliminado.');
+    await listUsers();
+  } catch (e) {
+    $msg(String(e));
+  }
+}
+
 // ---- Productos (placeholder para la siguiente iteración) ----
 let CATEGORIES = [];
 
@@ -97,6 +161,18 @@ async function loadCategories() {
   CATEGORIES = data || [];
   const sel = document.getElementById('prodCategory');
   sel.innerHTML = CATEGORIES.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+let COLLECTIONS = [];
+
+async function loadCollections() {
+  const { data, error } = await supabase.from('collections').select('id,name,slug').order('name');
+  if (error) { $msg(error.message); return; }
+  COLLECTIONS = data || [];
+  const sel = document.getElementById('prodCollections');
+  if (sel) {
+    sel.innerHTML = COLLECTIONS.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
 }
 
 // Listado de productos con acciones
@@ -162,6 +238,8 @@ document.getElementById('prodName').addEventListener('input', (e) => {
 
 async function openProductModal(id) {
   await loadCategories();
+  const selCol = document.getElementById('prodCollections');
+  await loadCollectionsSelect(selCol);
   document.getElementById('formProduct').reset();
   document.getElementById('prodId').value = id || '';
   document.getElementById('titleProduct').textContent = id ? 'Editar producto' : 'Nuevo producto';
@@ -175,6 +253,8 @@ async function openProductModal(id) {
     document.getElementById('prodDesc').value = data.description || '';
     document.getElementById('prodCategory').value = data.category_id || (CATEGORIES[0]?.id || '');
     document.getElementById('prodActive').checked = !!data.is_active;
+    const selected = await getProductCollectionIds(id);
+    [...selCol.options].forEach(o => o.selected = selected.includes(Number(o.value)));
   } else {
     document.getElementById('prodCategory').value = CATEGORIES[0]?.id || '';
     document.getElementById('prodActive').checked = true;
@@ -195,13 +275,19 @@ async function saveProduct(e) {
     is_active: document.getElementById('prodActive').checked
   };
 
-  let error;
+  let res;
   if (id) {
-    ({ error } = await supabase.from('products').update(payload).eq('id', Number(id)));
+    res = await supabase.from('products').update(payload).eq('id', Number(id)).select('id').single();
   } else {
-    ({ error } = await supabase.from('products').insert([payload]));
+    res = await supabase.from('products').insert([payload]).select('id').single();
   }
-  if (error) return $msg(error.message);
+  if (res.error) return $msg(res.error.message);
+
+  const productId = id ? Number(id) : res.data.id;
+
+  const sel = document.getElementById('prodCollections');
+  const selectedIds = [...sel.selectedOptions].map(o => Number(o.value));
+  await setProductCollections(productId, selectedIds);
 
   productModal.hide();
   await listProducts();
@@ -304,3 +390,13 @@ async function deleteProduct(id) {
     $msg(String(e));
   }
 }
+
+// después de requireAdmin() y listeners:
+setCollectionsChangedCallback(async () => {
+  const sel = document.getElementById('prodCollections');
+  if (sel) await loadCollectionsSelect(sel);
+});
+
+initCollectionsUI();
+await listCollections();
+

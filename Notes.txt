@@ -1,0 +1,438 @@
+-- EXTENSIONES ÚTILES
+create extension if not exists "uuid-ossp";
+create extension if not exists "pgcrypto";
+
+-- ========== CATALOGO ==========
+-- CATEGORÍAS
+create table if not exists categories (
+  id          bigserial primary key,
+  name        text not null unique,
+  slug        text not null unique,
+  created_at  timestamptz not null default now()
+);
+
+create index if not exists idx_categories_slug on categories(slug);
+
+-- PRODUCTOS (información general)
+create table if not exists products (
+  id            bigserial primary key,
+  name          text        not null,
+  slug          text        not null unique,
+  description   text,
+  category_id   bigint      references categories(id) on delete set null,
+  is_active     boolean     not null default true,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+create index if not exists idx_products_active on products(is_active);
+create index if not exists idx_products_category on products(category_id);
+
+-- IMÁGENES POR PRODUCTO
+create table if not exists product_images (
+  id           bigserial primary key,
+  product_id   bigint not null references products(id) on delete cascade,
+  url          text   not null,
+  sort_order   integer not null default 0,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists idx_product_images_product on product_images(product_id);
+
+-- VARIANTES (talla, color, precio, stock, SKU)
+-- Si no quieres variantes aún, puedes dejar este bloque creado y usar una sola variante por producto.
+create table if not exists product_variants (
+  id            bigserial primary key,
+  product_id    bigint not null references products(id) on delete cascade,
+  sku           text unique,
+  size          text,                -- S, M, L, XL (puedes normalizar más adelante)
+  color         text,                -- negro, blanco, etc.
+  price         numeric(12,2) not null check (price >= 0),
+  stock         integer      not null default 0 check (stock >= 0),
+  is_active     boolean      not null default true,
+  created_at    timestamptz  not null default now(),
+  updated_at    timestamptz  not null default now()
+);
+
+create index if not exists idx_variants_product on product_variants(product_id);
+create index if not exists idx_variants_active on product_variants(is_active);
+
+-- ========== CLIENTES ==========
+create table if not exists customers (
+  id           uuid primary key default gen_random_uuid(),
+  email        text unique,
+  full_name    text,
+  phone        text,
+  created_at   timestamptz not null default now()
+);
+
+-- DIRECCIONES
+create table if not exists addresses (
+  id            bigserial primary key,
+  customer_id   uuid not null references customers(id) on delete cascade,
+  label         text,                 -- "Casa", "Oficina"
+  line1         text not null,
+  line2         text,
+  city          text not null,
+  state         text,
+  postal_code   text,
+  country       text default 'MX',
+  is_default    boolean not null default false,
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists idx_addresses_customer on addresses(customer_id);
+
+-- ========== ÓRDENES ==========
+create type order_status as enum ('pending','paid','canceled','shipped','delivered');
+
+create table if not exists orders (
+  id            bigserial primary key,
+  customer_id   uuid references customers(id) on delete set null,
+  status        order_status not null default 'pending',
+  subtotal      numeric(12,2) not null default 0,
+  discount      numeric(12,2) not null default 0,
+  shipping_cost numeric(12,2) not null default 0,
+  total         numeric(12,2) not null default 0,
+  shipping_address_id bigint references addresses(id) on delete set null,
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists idx_orders_customer on orders(customer_id);
+create index if not exists idx_orders_status on orders(status);
+
+-- ITEMS (si usas variantes, referencia product_variants; si no, products)
+create table if not exists order_items (
+  id            bigserial primary key,
+  order_id      bigint not null references orders(id) on delete cascade,
+  product_id    bigint references products(id) on delete set null,
+  variant_id    bigint references product_variants(id) on delete set null,
+  name_snapshot text   not null,               -- nombre al momento de la compra
+  size_snapshot text,                          -- talla al momento de la compra
+  color_snapshot text,
+  unit_price    numeric(12,2) not null,
+  quantity      integer       not null check (quantity > 0),
+  line_total    numeric(12,2) not null
+);
+
+create index if not exists idx_order_items_order on order_items(order_id);
+
+-- ========== PROMOS (OPCIONAL LIGERO) ==========
+create table if not exists coupons (
+  id          bigserial primary key,
+  code        text not null unique,
+  description text,
+  type        text not null check (type in ('percent','fixed')), -- 10% o $50
+  value       numeric(12,2) not null check (value > 0),
+  is_active   boolean not null default true,
+  starts_at   timestamptz,
+  ends_at     timestamptz,
+  created_at  timestamptz not null default now()
+);
+
+-- ========== RLS BÁSICO PARA FRONT PÚBLICO ==========
+-- Catálogo visible: productos activos y variantes activas con stock > 0
+alter table categories enable row level security;
+alter table products enable row level security;
+alter table product_images enable row level security;
+alter table product_variants enable row level security;
+
+do $$
+begin
+  if not exists (select 1 from pg_policies where tablename='categories' and policyname='public_read_categories') then
+    create policy public_read_categories on categories
+      for select to anon using (true);
+  end if;
+
+  if not exists (select 1 from pg_policies where tablename='products' and policyname='public_read_products') then
+    create policy public_read_products on products
+      for select to anon using (is_active = true);
+  end if;
+
+  if not exists (select 1 from pg_policies where tablename='product_images' and policyname='public_read_images') then
+    create policy public_read_images on product_images
+      for select to anon using (true);
+  end if;
+
+  if not exists (select 1 from pg_policies where tablename='product_variants' and policyname='public_read_variants') then
+    create policy public_read_variants on product_variants
+      for select to anon using (is_active = true and stock > 0);
+  end if;
+end$$;
+
+-- ========== VISTA PÚBLICA (CATÁLOGO) ==========
+-- Combina producto + la variante más barata disponible (útil para tarjetas)
+create or replace view public_catalog as
+select
+  p.id as product_id,
+  p.name,
+  p.slug,
+  p.description,
+  p.category_id,
+  min(v.price) as price_from,
+  sum(case when v.stock > 0 and v.is_active then 1 else 0 end) as variants_available
+from products p
+left join product_variants v on v.product_id = p.id and v.is_active
+where p.is_active
+group by p.id;
+
+-- ========== DATOS DE EJEMPLO ==========
+insert into categories (name, slug)
+values ('Playeras','playeras'), ('Gorras','gorras'), ('Tote bags','tote')
+on conflict (slug) do nothing;
+
+-- Producto ejemplo + una variante
+insert into products (name, slug, description, category_id)
+values ('Playera Demo','playera-demo','Corte regular 100% algodón',
+        (select id from categories where slug='playeras'))
+on conflict (slug) do nothing;
+
+insert into product_variants (product_id, sku, size, color, price, stock, is_active)
+select id, 'SKU-DEMO-M-NEG', 'M', 'Negro', 349.00, 10, true
+from products where slug='playera-demo'
+on conflict do nothing;
+
+
+
+
+
+create table if not exists cart_items (
+  id           bigserial primary key,
+  customer_id  uuid,                                   -- si manejas login
+  session_id   text,                                   -- o usa un token de sesión del browser
+  product_id   bigint references products(id) on delete set null,
+  variant_id   bigint references product_variants(id) on delete set null,
+  quantity     integer not null check (quantity > 0),
+  added_at     timestamptz not null default now()
+);
+
+create index if not exists idx_cart_customer on cart_items(customer_id);
+create index if not exists idx_cart_session  on cart_items(session_id);
+
+alter table cart_items enable row level security;
+
+-- si no hay login, permiso de lectura por session_id (pasado por header/cookie en API);
+-- por simplicidad, solo lectura pública (ajusta luego con backend)
+create policy public_read_cart on cart_items for select to anon using (true);
+create policy public_write_cart on cart_items for insert to anon with check (quantity > 0);
+
+
+
+create table if not exists reviews (
+  id           bigserial primary key,
+  product_id   bigint not null references products(id) on delete cascade,
+  customer_id  uuid references customers(id) on delete set null,
+  rating       integer not null check (rating between 1 and 5),
+  comment      text,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists idx_reviews_product on reviews(product_id);
+
+alter table reviews enable row level security;
+create policy public_read_reviews  on reviews for select to anon using (true);
+-- para crear reviews normalmente exigimos login; de momento lo dejamos cerrado:
+-- create policy user_create_reviews on reviews for insert to authenticated with check (rating between 1 and 5);
+
+create table if not exists audit_events (
+  id          bigserial primary key,
+  actor       text,                   -- 'admin:joel' o 'system'
+  action      text not null,          -- 'create_product','update_stock', etc.
+  entity_type text not null,          -- 'product','order','variant'
+  entity_id   text,
+  meta        jsonb,
+  created_at  timestamptz not null default now()
+);
+
+
+create or replace function recalc_order_total(p_order_id bigint)
+returns void language plpgsql as $$
+begin
+  update orders
+  set subtotal = coalesce((
+        select sum(unit_price*quantity)
+        from order_items
+        where order_id = p_order_id
+      ),0),
+      total = coalesce((
+        select sum(unit_price*quantity)
+        from order_items
+        where order_id = p_order_id
+      ),0) + shipping_cost - discount
+  where id = p_order_id;
+end$$;
+
+create or replace function trg_order_items_after_change()
+returns trigger language plpgsql as $$
+begin
+  perform recalc_order_total(coalesce(new.order_id, old.order_id));
+  return null;
+end$$;
+
+drop trigger if exists t_order_items_aiud on order_items;
+create trigger t_order_items_aiud
+after insert or update or delete on order_items
+for each row execute function trg_order_items_after_change();
+
+
+create or replace function deduct_stock_on_paid()
+returns trigger language plpgsql as $$
+begin
+  if new.status = 'paid' and old.status <> 'paid' then
+    update product_variants v
+    set stock = stock - oi.quantity
+    from order_items oi
+    where oi.order_id = new.id and oi.variant_id = v.id;
+
+    update products p
+    set stock = stock - oi.quantity
+    from order_items oi
+    where oi.order_id = new.id and oi.product_id = p.id and oi.variant_id is null;
+  end if;
+  return new;
+end$$;
+
+drop trigger if exists t_orders_paid on orders;
+create trigger t_orders_paid
+after update on orders
+for each row execute function deduct_stock_on_paid();
+
+-- agrega columna si no existe
+alter table products add column if not exists slug text;
+create unique index if not exists idx_products_slug on products(slug);
+
+-- genera slug básico desde el nombre
+update products
+set slug = regexp_replace(lower(trim(name)), '[^a-z0-9]+', '-', 'g')
+where slug is null or slug = '';
+
+-- evita nulls futuros
+alter table products alter column slug set not null;
+
+
+
+
+
+
+-- PERFIL/ROLES
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text unique,
+  role text not null default 'client' check (role in ('client','staff','admin','owner')),
+  status text not null default 'active' check (status in ('active','inactive')),
+  created_at timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+
+-- leer propio perfil
+drop policy if exists "read own profile" on public.profiles;
+create policy "read own profile" on public.profiles
+for select to authenticated
+using (id = auth.uid());
+
+-- (opcional) admins leen todos
+drop policy if exists "admins read profiles" on public.profiles;
+create policy "admins read profiles" on public.profiles
+for select to authenticated
+using (exists (select 1 from public.profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')));
+
+-- alta automática del perfil al crear usuario
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, email) values (new.id, new.email)
+  on conflict (id) do nothing;
+  return new;
+end $$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users for each row
+execute procedure public.handle_new_user();
+
+-- Para ascenderte a 'owner' (una sola vez, con tu correo):
+-- update public.profiles set role='owner' where email='tu@correo.com';
+
+
+-- CATEGORIES
+drop policy if exists "admins manage categories" on public.categories;
+create policy "admins manage categories" on public.categories
+for all to authenticated
+using (exists (select 1 from public.profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')))
+with check (exists (select 1 from public.profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')));
+
+-- PRODUCTS
+drop policy if exists "admins manage products" on public.products;
+create policy "admins manage products" on public.products
+for all to authenticated
+using (exists (select 1 from public.profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')))
+with check (exists (select 1 from public.profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')));
+
+-- PRODUCT_IMAGES
+drop policy if exists "admins manage product_images" on public.product_images;
+create policy "admins manage product_images" on public.product_images
+for all to authenticated
+using (exists (select 1 from public.profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')))
+with check (exists (select 1 from public.profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')));
+
+-- PRODUCT_VARIANTS
+drop policy if exists "admins manage variants" on public.product_variants;
+create policy "admins manage variants" on public.product_variants
+for all to authenticated
+using (exists (select 1 from public.profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')))
+with check (exists (select 1 from public.profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')));
+
+
+-- Perfiles/Roles
+create table profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text unique,
+  role text not null default 'client' check (role in ('client','staff','admin','owner')),
+  created_at timestamptz default now()
+);
+
+
+
+-- Vista pública para el grid (precio mínimo + # variantes disponibles)
+create view public_catalog as
+select
+  p.id as product_id,
+  p.slug,
+  p.name,
+  min(v.price) as price_from,
+  count(*) filter (where v.is_active and v.stock > 0) as variants_available
+from products p
+join product_variants v on v.product_id = p.id
+where p.is_active
+group by p.id, p.slug, p.name;
+
+-- RLS
+alter table products enable row level security;
+alter table product_variants enable row level security;
+
+-- Lectura pública del catálogo (solo activos)
+create policy "public read products"
+on products for select
+to anon, authenticated
+using (is_active = true);
+
+create policy "public read variants"
+on product_variants for select
+to anon, authenticated
+using (is_active = true and stock > 0);
+
+-- Escritura solo admin/owner
+create policy "admins manage products"
+on products for all
+to authenticated
+using (exists (select 1 from profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')))
+with check (exists (select 1 from profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')));
+
+create policy "admins manage variants"
+on product_variants for all
+to authenticated
+using (exists (select 1 from profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')))
+with check (exists (select 1 from profiles pr where pr.id = auth.uid() and pr.role in ('admin','owner')));

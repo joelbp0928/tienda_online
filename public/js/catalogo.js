@@ -6,15 +6,22 @@ const money = v => new Intl.NumberFormat('es-MX', { style: 'currency', currency:
 
 async function fetchProducts(search = '') {
   let q = supabase
-    .from('public_catalog')
-    .select('product_id, slug, name, price_from, variants_available')
+    .from('public_catalog_grid')
+    .select('product_id, slug, name, price_from, variants_available, cover_url')
     .order('product_id', { ascending: false });
 
   if (search) q = q.ilike('name', `%${search}%`);
   const { data, error } = await q;
   if (error) { console.error(error.message); return []; }
-  return data;
+  return data || [];
 }
+
+// resuelve URL de storage si guardaste solo la ruta
+const resolveCover = (url) => {
+  if (url && /^https?:\/\//i.test(url)) return url;           // ya es URL completa
+  if (url) return supabase.storage.from('products').getPublicUrl(url).data.publicUrl;
+  return '../img/demo-product.png'; // pon esta imagen en /public/img/
+};
 
 function render(list) {
   const grid = document.getElementById('grid');
@@ -26,18 +33,19 @@ function render(list) {
   for (const p of list) {
     const col = document.createElement('div');
     col.className = 'col-6 col-md-4 col-lg-3';
-    const img = `https://picsum.photos/seed/${p.product_id}/600/600`;
+    const img = resolveCover(p.cover_url);
 
     col.innerHTML = `
       <a href="producto.html?slug=${encodeURIComponent(p.slug)}" class="text-decoration-none text-light">
         <div class="card h-100">
-          <img src="${img}" class="card-img-top" alt="${p.name}">
+          <img src="${img}" class="card-img-top" alt="${p.name}" onerror="this.src='../img/demo-product.png'">
           <div class="card-body d-flex flex-column">
             <h3 class="h6 mb-1">${p.name}</h3>
-            <small class="text-secondary mb-2">Desde ${money(p.price_from)} • ${p.variants_available} variantes</small>
+            <small class="text-secondary mb-2">
+              Desde ${money(p.price_from)} • ${p.variants_available} variantes
+            </small>
             <div class="mt-auto d-flex justify-content-between align-items-center">
               <span class="badge text-bg-dark w-100">Ver detalle</span>
-
             </div>
           </div>
         </div>
@@ -45,6 +53,7 @@ function render(list) {
     grid.appendChild(col);
   }
 }
+
 
 async function fetchVariants(productId) {
   const { data: variants, error } = await supabase
@@ -65,17 +74,17 @@ async function fetchVariants(productId) {
 
 
 async function load(search = '') {
-    const data = await fetchProducts(search);
-    render(data);
+  const data = await fetchProducts(search);
+  render(data);
 }
 
 // eventos
 document.getElementById('btnSearch').addEventListener('click', () => {
-    const q = document.getElementById('q').value.trim();
-    load(q);
+  const q = document.getElementById('q').value.trim();
+  load(q);
 });
 document.getElementById('q').addEventListener('keyup', (e) => {
-    if (e.key === 'Enter') document.getElementById('btnSearch').click();
+  if (e.key === 'Enter') document.getElementById('btnSearch').click();
 });
 
 // inicio

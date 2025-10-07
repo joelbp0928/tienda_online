@@ -64,7 +64,9 @@
                       placeholder="Contraseña"
                       required
                     />
-                    <button class="btn btn-light w-100">Entrar</button>
+                    <button type="submit" class="btn btn-light w-100">
+                      Entrar
+                    </button>
                   </form>
                 </div>
 
@@ -85,9 +87,10 @@
                       minlength="6"
                       required
                     />
-                    <button class="btn btn-outline-light w-100">
+                    <button type="submit" class="btn btn-outline-light w-100">
                       Crear cuenta
                     </button>
+
                     <small class="text-secondary">
                       Nota: las cuentas nuevas entran como <code>client</code>.
                       Un <b>owner/admin</b> debe ascenderlas a
@@ -105,7 +108,7 @@
               </div>
             </div>
           </div>
-          <p id="msg" class="text-center mt-3 small text-warning"></p>
+          <div id="msg" class="text-center mt-3"></div>
         </div>
       </div>
     </div>
@@ -113,7 +116,27 @@
     <script type="module">
       import supabase from "../js/supabase-config.js";
 
-      const msg = (t) => (document.getElementById("msg").textContent = t || "");
+      const $ = (s) => document.querySelector(s);
+      const setMsg = (text = "", type = "warning") => {
+        $("#msg").innerHTML = text
+          ? `<div class="alert alert-${type} py-2 px-3 d-inline-block">${text}</div>`
+          : "";
+      };
+      const setLoading = (form, loading, labelLoading = "Procesando…") => {
+        if (!form) return;
+        const btn = form.querySelector(
+          'button[type="submit"],button:not([type])'
+        );
+        if (btn) {
+          btn.dataset.labelDefault =
+            btn.dataset.labelDefault || btn.textContent;
+          btn.textContent = loading ? labelLoading : btn.dataset.labelDefault;
+          btn.disabled = loading;
+        }
+        form.querySelectorAll("input,button,select,textarea").forEach((el) => {
+          if (el !== btn) el.disabled = loading;
+        });
+      };
 
       // Si ya estás logueado y con rol permitido, redirige a admin
       (async () => {
@@ -124,58 +147,90 @@
           const { data: role, error: roleErr } = await supabase.rpc(
             "whoami_role"
           );
-          if (!roleErr && ["admin", "owner"].includes(role)) {
+          if (!roleErr && ["staff", "admin", "owner"].includes(role)) {
             location.href = "admin.html";
             return;
           }
         }
       })();
 
-      document
-        .getElementById("formLogin")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          msg("");
-          const email = document.getElementById("loginEmail").value.trim();
-          const password = document.getElementById("loginPass").value;
+      // ---- Login
+      $("#formLogin").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        setMsg("");
+        const form = e.currentTarget;
+        setLoading(form, true, "Entrando…");
+        try {
+          const email = $("#loginEmail").value.trim();
+          const password = $("#loginPass").value;
+
           const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
           });
-          if (error) return msg(error.message);
-          // checa rol
-          // checa rol por RPC (evita RLS)
+          if (error) {
+            setMsg(error.message);
+            return;
+          }
+
           const { data: role, error: roleErr } = await supabase.rpc(
             "whoami_role"
           );
           if (roleErr) {
-            msg("Error verificando permisos: " + roleErr.message);
+            setMsg("Error verificando permisos: " + roleErr.message);
             await supabase.auth.signOut();
             return;
           }
-          if (!role || !["admin", "owner"].includes(role)) {
-            msg(
+          if (!role || !["staff", "admin", "owner"].includes(role)) {
+            setMsg(
               "Tu cuenta no tiene permisos para el panel. Pide ascenso a un owner/admin."
             );
             await supabase.auth.signOut();
             return;
           }
           location.href = "admin.html";
-        });
+        } finally {
+          setLoading(form, false);
+        }
+      });
 
-      document
-        .getElementById("formSignup")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          msg("");
-          const email = document.getElementById("suEmail").value.trim();
-          const password = document.getElementById("suPass").value;
-          const { error } = await supabase.auth.signUp({ email, password });
-          if (error) return msg(error.message);
-          msg(
-            "Cuenta creada. Revisa tu correo si se requiere verificación. Pide a un owner/admin tu ascenso de rol."
+      // ---- Signup
+      $("#formSignup").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const form = e.currentTarget;
+        setLoading(form, true, "Creando cuenta…");
+        try {
+          const email = $("#suEmail").value.trim();
+          const password = $("#suPass").value;
+          const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo:
+                "https://pruebas-tienda-17949.web.app/admin/login.html",
+            },
+          });
+          if (error) {
+            setMsg(error.message);
+            return;
+          }
+
+          // Limpia el formulario y cambia a la pestaña de login
+          form.reset();
+          setMsg(
+            "Cuenta creada. Revisa tu correo si se requiere verificación. Pide a un owner/admin tu ascenso de rol.",
+            "success"
           );
-        });
+
+          // Cambia a la pestaña "Iniciar sesión", pre-llena el email y enfoca password
+          const loginTabBtn = document.getElementById("login-tab");
+          bootstrap.Tab.getOrCreateInstance(loginTabBtn).show();
+          $("#loginEmail").value = email;
+          $("#loginPass").focus();
+        } finally {
+          setLoading(form, false);
+        }
+      });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   </body>
