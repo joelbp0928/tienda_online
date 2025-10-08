@@ -161,3 +161,7 @@ body {
 .navbar.bg-elev {
   background-color: var(--elev);  /* o el color que quieras */
 }
+
+.card-img-top {
+  transition: opacity .25s ease;
+}
