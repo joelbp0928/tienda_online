@@ -1,6 +1,8 @@
 import supabase from './supabase-config.js';
 import "./chatBot.js";
 
+// Desktop con hover y puntero fino (mouse/trackpad)
+const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const money = v => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v);
 
 // --- NUEVO: caché de imágenes por producto

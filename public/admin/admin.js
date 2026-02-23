@@ -41,6 +41,13 @@ async function requireAdmin() {
     document.getElementById('btnNewCategory')?.classList.add('d-none');
   }
 
+  // --- Settings (solo owner) ---
+  const btnSettings = document.getElementById('btnSettings');
+  if (myRole === 'owner') {
+    btnSettings?.classList.remove('d-none');
+    btnSettings?.addEventListener('click', openStoreSettingsModal);
+    showStoreSettingsMsg('');
+  }
 
   document.getElementById('btnLogout').addEventListener('click', async () => {
     await supabase.auth.signOut();
@@ -400,3 +407,210 @@ setCollectionsChangedCallback(async () => {
 initCollectionsUI();
 await listCollections();
 
+const settingsModal = new bootstrap.Modal(document.getElementById('modalStoreSettings'));
+const DEMO = '../img/demo-product.png';
+
+const resolveBranding = (pathOrUrl) => {
+  if (!pathOrUrl) return DEMO;
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  const clean = String(pathOrUrl).replace(/^branding\//, '');
+  return supabase.storage.from('branding').getPublicUrl(clean).data.publicUrl;
+};
+
+async function openStoreSettingsModal() {
+  $msg('');
+  showStoreSettingsMsg('');
+  await reloadStoreSettingsModal();
+  // carga fila singleton id=1 (0/1 row safe)
+  const { data, error } = await supabase
+    .from('store_settings')
+    .select('store_name, topbar_text, hero_title, hero_subtitle, hero_image_url, logo_url')
+    .eq('id', 1)
+    .maybeSingle();
+  if (error) return $msg(error.message);
+
+  const s = data || {};
+  document.getElementById('setStoreName').value = s.store_name || '';
+  document.getElementById('setTopbarText').value = s.topbar_text || '';
+  document.getElementById('setHeroTitle').value = s.hero_title || '';
+  document.getElementById('setHeroSubtitle').value = s.hero_subtitle || '';
+
+  // miniaturas
+  const logoThumb = document.getElementById('thumbLogo');
+  const heroThumb = document.getElementById('thumbHero');
+  logoThumb.src = resolveBranding(s.logo_url);
+  heroThumb.src = resolveBranding(s.hero_image_url);
+  logoThumb.onerror = () => (logoThumb.src = DEMO);
+  heroThumb.onerror = () => (heroThumb.src = DEMO);
+
+  // limpia inputs file
+  document.getElementById('fileLogo').value = '';
+  document.getElementById('fileHero').value = '';
+
+  settingsModal.show();
+}
+
+document.getElementById('formStoreSettings')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  // mensaje dentro del modal
+  showStoreSettingsMsg('');
+
+  if (myRole !== 'owner') {
+    showStoreSettingsMsg('Solo owner puede modificar configuración.', 'danger');
+    return;
+  }
+
+  setStoreSettingsLoading(true);
+
+  const logoFile = document.getElementById('fileLogo')?.files?.[0] || null;
+  const heroFile = document.getElementById('fileHero')?.files?.[0] || null;
+
+  // Helper: borra cualquier variante logo.* / hero.* del bucket branding
+  async function removeByPrefix(prefix) {
+    const { data: files, error } = await supabase.storage
+      .from('branding')
+      .list('', { limit: 100 });
+
+    if (error) throw new Error(error.message);
+
+    const toDelete = (files || [])
+      .filter(f => typeof f?.name === 'string' && f.name.toLowerCase().startsWith(prefix.toLowerCase() + '.'))
+      .map(f => f.name);
+
+    if (toDelete.length) {
+      const { error: delErr } = await supabase.storage.from('branding').remove(toDelete);
+      if (delErr) throw new Error(delErr.message);
+    }
+  }
+
+  // Helper: sube archivo con nombre fijo y devuelve public URL
+  async function uploadFixed(nameBase, file) {
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+    const path = `${nameBase}.${ext}`; // SIEMPRE logo.ext o hero.ext
+
+    // borra logo.* / hero.* para evitar basura si cambias extensión
+    await removeByPrefix(nameBase);
+
+    const { error: upErr } = await supabase.storage
+      .from('branding')
+      .upload(path, file, { upsert: true, cacheControl: '3600' });
+
+    if (upErr) throw new Error(upErr.message);
+
+    const { data } = supabase.storage.from('branding').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  try {
+    // 1) Subidas opcionales (guardamos URL pública)
+    let logoUrl = null;
+    let heroUrl = null;
+
+    if (logoFile) logoUrl = await uploadFixed('logo', logoFile);
+    if (heroFile) heroUrl = await uploadFixed('hero', heroFile);
+
+    // 2) Update DB (URL en vez de path)
+    const payload = {
+      store_name: document.getElementById('setStoreName').value.trim(),
+      topbar_text: document.getElementById('setTopbarText').value.trim(),
+      hero_title: document.getElementById('setHeroTitle').value.trim(),
+      hero_subtitle: document.getElementById('setHeroSubtitle').value.trim(),
+    };
+
+    if (logoUrl) payload.logo_url = logoUrl;
+    if (heroUrl) payload.hero_image_url = heroUrl;
+
+    const { error: dbErr } = await supabase
+      .from('store_settings')
+      .update(payload)
+      .eq('id', 1);
+
+    if (dbErr) throw new Error(dbErr.message);
+
+    // 3) Refresca miniaturas
+    if (logoUrl) document.getElementById('thumbLogo').src = logoUrl;
+    if (heroUrl) document.getElementById('thumbHero').src = heroUrl;
+
+    // 4) Limpia inputs file
+    document.getElementById('fileLogo').value = '';
+    document.getElementById('fileHero').value = '';
+
+    showStoreSettingsMsg('Configuración guardada correctamente ✅', 'success');
+    await reloadStoreSettingsModal();
+
+  } catch (err) {
+    showStoreSettingsMsg(String(err?.message || err), 'danger');
+  } finally {
+    setStoreSettingsLoading(false);
+  }
+});
+
+function showStoreSettingsMsg(text = '', type = 'success') {
+  const el = document.getElementById('storeSettingsMsg');
+  if (!el) return;
+
+  if (!text) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `
+    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+      ${text}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  `;
+
+  if (type === 'success') {
+    setTimeout(() => { el.innerHTML = ''; }, 3000);
+  }
+}
+
+function setStoreSettingsLoading(isLoading) {
+  const btn = document.getElementById('btnSaveStoreSettings');
+  if (!btn) return;
+
+  const spinner = btn.querySelector('.spinner-border');
+  const text = btn.querySelector('.btn-text');
+
+  btn.disabled = isLoading;
+  if (spinner) spinner.classList.toggle('d-none', !isLoading);
+  if (text) text.textContent = isLoading ? 'Guardando...' : 'Guardar';
+}
+
+async function reloadStoreSettingsModal() {
+  const { data, error } = await supabase
+    .from('store_settings')
+    .select('store_name, topbar_text, hero_title, hero_subtitle, hero_image_url, logo_url')
+    .eq('id', 1)
+    .maybeSingle();
+
+  if (error) {
+    showStoreSettingsMsg(error.message, 'danger');
+    return;
+  }
+
+  const s = data || {};
+  document.getElementById('setStoreName').value = s.store_name || '';
+  document.getElementById('setTopbarText').value = s.topbar_text || '';
+  document.getElementById('setHeroTitle').value = s.hero_title || '';
+  document.getElementById('setHeroSubtitle').value = s.hero_subtitle || '';
+
+  // Miniaturas: si hay URL, úsala; si no, usa resolveBranding (tu demo)
+  const logoThumb = document.getElementById('thumbLogo');
+  const heroThumb = document.getElementById('thumbHero');
+
+  logoThumb.src = bust(resolveBranding(s.logo_url));
+  heroThumb.src = bust(resolveBranding(s.hero_image_url));
+
+  logoThumb.onerror = () => (logoThumb.src = bust(resolveBranding(null)));
+  heroThumb.onerror = () => (heroThumb.src = bust(resolveBranding(null)));
+
+  // Limpia inputs file
+  document.getElementById('fileLogo').value = '';
+  document.getElementById('fileHero').value = '';
+}
+
+function bust(url) {
+  if (!url) return url;
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}v=${Date.now()}`;
+}

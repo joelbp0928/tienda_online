@@ -3,13 +3,79 @@ import "./chatBot.js";
 
 const money = cents => `$${(cents / 100).toFixed(2)} MXN`;
 
-// Resuelve la URL de portada (usa el mismo bucket que en catálogo)
-const resolveCover = (url) => {
-  if (url && /^https?:\/\//i.test(url)) return url;
-  if (url) return supabase.storage.from('products').getPublicUrl(url).data.publicUrl;
-  return './img/demo-product.png'; // imagen fallback
+const DEMO_IMG = './img/demo-product.png';
+
+const resolvePublic = (bucket, pathOrUrl) => {
+  if (!pathOrUrl) return null;
+  if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+  const clean = String(pathOrUrl).replace(new RegExp(`^${bucket}/`), '');
+  return supabase.storage.from(bucket).getPublicUrl(clean).data.publicUrl;
 };
 
+async function loadStoreSettings() {
+  const { data, error } = await supabase
+    .from('store_settings')
+    .select('store_name, topbar_text, hero_title, hero_subtitle, hero_image_url, logo_url')
+    .eq('id', 1)
+    .maybeSingle();
+
+  if (error) { console.warn('store_settings error:', error.message); return null; }
+  // Si no existe aún la fila, no rompas el home
+  return data || {
+    store_name: 'TIENDA',
+    topbar_text: '',
+    hero_title: '',
+    hero_subtitle: '',
+    hero_image_url: null,
+    logo_url: null
+  };
+}
+
+function applyStoreSettings(s) {
+  if (!s) return;
+
+  // Topbar
+  const topbar = document.getElementById('topbarText');
+  if (topbar) topbar.textContent = s.topbar_text || '';
+
+  // Brand
+  const brandName = document.getElementById('brandName');
+  if (brandName) brandName.textContent = s.store_name || 'TIENDA';
+
+  const logo = document.getElementById('brandLogo');
+  if (logo) {
+    const url = resolvePublic('branding', s.logo_url) || './img/radioear.png';
+    logo.src = url;
+    logo.onerror = () => { logo.src = './img/radioear.png'; };
+  }
+
+  // Hero text
+  const heroTitle = document.getElementById('heroTitle');
+  if (heroTitle) heroTitle.innerHTML = s.hero_title || '';
+
+  const heroSubtitle = document.getElementById('heroSubtitle');
+  if (heroSubtitle) heroSubtitle.textContent = s.hero_subtitle || '';
+
+  // Hero image
+  const heroImg = document.getElementById('heroImg');
+  if (heroImg) {
+    const url = resolvePublic('branding', s.hero_image_url) || './img/Collage_generico.png';
+    heroImg.src = url;
+    heroImg.onerror = () => { heroImg.src = './img/Collage_generico.png'; };
+  }
+
+  // (Opcional) categorías rápidas dinámicas:
+  // si quieres, te hago el render para reemplazar la sección "Categorías rápidas" con s.quick_categories
+}
+
+const resolveCover = (url) => {
+  if (url && /^https?:\/\//i.test(url)) return url;
+  if (url) {
+    const clean = String(url).replace(/^products\//, '');
+    return supabase.storage.from('products').getPublicUrl(clean).data.publicUrl;
+  }
+  return DEMO_IMG;
+};
 // ========== QUERIES ==========
 // View recomendada: public_catalog_grid (product_id, slug, name, price_from, variants_available, cover_url)
 // Por ahora: TODO el catálogo (sin filtro destacado)
@@ -48,7 +114,6 @@ async function fetchFeaturedProducts() {
     img: resolveCover(p.cover_url),
   }));
 }
-
 
 // Búsqueda por nombre (para el buscador del navbar en home)
 async function searchProductsByName(q) {
@@ -92,17 +157,17 @@ function renderProducts(list) {
 }
 
 // ========== SEARCH NAVBAR ==========
-function setupSearch(){
+function setupSearch() {
   const input = document.getElementById('searchInput');
   const btn = document.getElementById('btnSearch');
   const doSearch = async () => {
     const q = (input.value || '').trim();
-    if(!q) return renderProducts(await fetchAllProducts());
+    if (!q) return renderProducts(await fetchAllProducts());
     const list = await searchProductsByName(q);
     renderProducts(list);
   };
   btn.addEventListener('click', doSearch);
-  input.addEventListener('keyup', e => { if(e.key === 'Enter') doSearch(); });
+  input.addEventListener('keyup', e => { if (e.key === 'Enter') doSearch(); });
 }
 
 function addToCart(id) {
@@ -127,7 +192,10 @@ function updateCartCount() {
 (async function init() {
   document.getElementById('y').textContent = new Date().getFullYear();
 
-    // AHORA: muestra TODO el catálogo
+  const settings = await loadStoreSettings();
+  applyStoreSettings(settings);
+
+  // AHORA: muestra TODO el catálogo
   const list = await fetchAllProducts();
   renderProducts(list);
 
@@ -135,10 +203,10 @@ function updateCartCount() {
 
   // Newsletter fake (dejas igual)
   const form = document.getElementById('formNews');
-  if(form){
-    form.addEventListener('submit', ()=>{
+  if (form) {
+    form.addEventListener('submit', () => {
       const email = document.getElementById('newsEmail').value.trim();
-      if(email) alert('¡Gracias por suscribirte! (maqueta)');
+      if (email) alert('¡Gracias por suscribirte! (maqueta)');
     });
   }
 })();

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tienda | Playeras & Accesorios</title>
+    <title>RadioEar</title>
     <meta
       name="description"
       content="Catálogo de playeras y accesorios personalizados inspirados en música, pop y tendencias."
@@ -40,8 +40,7 @@
   <body class="bg-dark text-light">
     <!-- Topbar promo -->
     <div class="topbar text-center small py-2">
-      <span class="fw-semibold">Drop de la semana:</span> Promo de la Pame 😎 –
-      Envío CDMX 24h
+      <span id="topbarText"></span>
     </div>
 
     <!-- Navbar -->
@@ -53,8 +52,8 @@
           class="navbar-brand d-flex align-items-center gap-2 text-muted"
           href="./"
         >
-          <img src="/img/logo.svg" alt="Logo" height="28" />
-          <span class="fw-bold">TIENDA</span>
+          <img id="brandLogo" src="img/radioear.png" alt="Logo" height="28" />
+          <span id="brandName" class="fw-bold">TIENDA</span>
         </a>
         <button
           class="navbar-toggler text-muted"
@@ -108,10 +107,10 @@
       <div class="container py-5">
         <div class="row align-items-center g-4">
           <div class="col-lg-6">
-            <h1 class="display-5 fw-bold lh-1 mb-3">
-              Playeras & accesorios <span class="grad">en tendencia</span>
+            <h1 class="display-5 fw-bold lh-1 mb-3"><!-- id= heroTitle -->
+              Accesorios <span class="grad">en tendencia</span>
             </h1>
-            <p class="lead text-muted">
+            <p id="heroSubtitle" class="lead text-muted">
               Diseños inspirados en música, cultura pop y eventos. Personaliza
               con tu nombre o fecha.
             </p>
@@ -134,9 +133,14 @@
             </div>
           </div>
           <div class="col-lg-6">
-            <div class="hero-card shadow-sm">
-              <!-- imagen de portada o collage -->
+            <div class="hero-card shadow-sm overflow-hidden">
+              <img
+                id="heroImg"
+                alt="Portada"
+                class="w-100 h-100 object-fit-cover"
+              />
             </div>
+            <!-- imagen de portada o collage -->
           </div>
         </div>
       </div>
