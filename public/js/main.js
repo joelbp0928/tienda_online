@@ -1,6 +1,8 @@
 import supabase from "./supabase-config.js";
 import "./chatBot.js";
 
+import { renderQuickCategories } from "./categories-ui.js";
+
 const money = cents => `$${(cents / 100).toFixed(2)} MXN`;
 
 const DEMO_IMG = './img/demo-product.png';
@@ -194,10 +196,12 @@ function updateCartCount() {
 
   const settings = await loadStoreSettings();
   applyStoreSettings(settings);
-
+  
+  await renderQuickCategories();
   // AHORA: muestra TODO el catálogo
   const list = await fetchAllProducts();
   renderProducts(list);
+
 
   setupSearch();
 
