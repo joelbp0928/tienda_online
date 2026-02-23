@@ -2,6 +2,8 @@ import supabase from "./supabase-config.js";
 import "./chatBot.js";
 
 import { renderQuickCategories } from "./categories-ui.js";
+import { bindAddToCartButtons, updateCartBadge, syncCartToDbIfClient } from "./cart.js";
+import { initAuthModals } from "./auth.js";
 
 const money = cents => `$${(cents / 100).toFixed(2)} MXN`;
 
@@ -142,18 +144,33 @@ function renderProducts(list) {
     const col = document.createElement('div');
     col.className = 'col-6 col-md-4 col-lg-3';
     col.innerHTML = `
-      <a href="/html/producto.html?slug=${encodeURIComponent(p.slug)}" class="text-decoration-none text-light">
-        <div class="card h-100 card-product position-relative">
-          <img class="card-img-top" src="${p.img}" alt="${p.name}" onerror="this.src='./img/demo-product.png'">
-          <div class="card-body d-flex flex-column">
-            <h3 class="h6 mb-2">${p.name}</h3>
-            <div class="mt-auto d-flex justify-content-between align-items-center">
-              <span class="price">${money(p.price)}</span>
-              <span class="btn btn-sm btn-dark">Ver</span>
-            </div>
-          </div>
+  <div class="card h-100 card-product position-relative">
+    <a href="/html/producto.html?slug=${encodeURIComponent(p.slug)}" class="text-decoration-none text-light">
+      <img class="card-img-top" src="${p.img}" alt="${p.name}" onerror="this.src='./img/demo-product.png'">
+    </a>
+
+    <div class="card-body d-flex flex-column">
+      <h3 class="h6 mb-2">${p.name}</h3>
+
+      <div class="mt-auto d-flex justify-content-between align-items-center gap-2">
+        <span class="price">${money(p.price)}</span>
+
+        <div class="d-flex gap-2">
+          <a href="/html/producto.html?slug=${encodeURIComponent(p.slug)}" class="btn btn-sm btn-dark">Ver</a>
+
+          <button
+            class="btn btn-sm btn-outline-dark"
+            data-add-to-cart
+            data-product-id="${p.id}"
+            title="Agregar al carrito"
+          >
+            <i class="fa-solid fa-bag-shopping me-1"></i> Agregar
+          </button>
         </div>
-      </a>`;
+      </div>
+    </div>
+  </div>
+`;
     grid.appendChild(col);
   });
 }
@@ -172,36 +189,22 @@ function setupSearch() {
   input.addEventListener('keyup', e => { if (e.key === 'Enter') doSearch(); });
 }
 
-function addToCart(id) {
-  // carrito mínimo en localStorage
-  const key = 'cart';
-  const cart = JSON.parse(localStorage.getItem(key) || '[]');
-  const prod = MOCK_PRODUCTS.find(p => p.id == id);
-  const existing = cart.find(i => i.id == prod.id);
-  if (existing) existing.qty += 1;
-  else cart.push({ id: prod.id, name: prod.name, price: prod.price, qty: 1 });
-  localStorage.setItem(key, JSON.stringify(cart));
-  updateCartCount();
-}
-
-function updateCartCount() {
-  const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-  const total = cart.reduce((s, i) => s + i.qty, 0);
-  const badge = document.getElementById('cartCount');
-  if (badge) badge.textContent = total;
-}
-
 (async function init() {
   document.getElementById('y').textContent = new Date().getFullYear();
 
   const settings = await loadStoreSettings();
   applyStoreSettings(settings);
-  
+
   await renderQuickCategories();
-  // AHORA: muestra TODO el catálogo
+
   const list = await fetchAllProducts();
   renderProducts(list);
 
+  updateCartBadge();          // pinta el contador desde cache
+  bindAddToCartButtons();     // activa clicks en botones
+  await syncCartToDbIfClient(); // si ya está logeado como client, sincroniza
+
+  initAuthModals();
 
   setupSearch();
 
