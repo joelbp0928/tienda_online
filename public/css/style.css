@@ -219,3 +219,7 @@ body {
 .modal-content .small {
   color: #9aa4b2 !important;
 }
+
+.modal-backdrop.show {
+  opacity: 0.75;
+}
