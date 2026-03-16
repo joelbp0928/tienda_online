@@ -3,7 +3,7 @@ import "./chatBot.js";
 
 import { renderQuickCategories } from "./categories-ui.js";
 import { bindAddToCartButtons, updateCartBadge, syncCartToDbIfClient } from "./cart.js";
-import { initAuthModals } from "./auth.js";
+import { initAuth } from "./auth.js";
 
 const money = cents => `$${(cents / 100).toFixed(2)} MXN`;
 
@@ -204,7 +204,7 @@ function setupSearch() {
   bindAddToCartButtons();     // activa clicks en botones
   await syncCartToDbIfClient(); // si ya está logeado como client, sincroniza
 
-  initAuthModals();
+  initAuth()
 
   setupSearch();
 

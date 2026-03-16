@@ -91,27 +91,53 @@
               <i class="bi bi-search"></i>
             </button>
           </form>
-          <!-- Auth buttons -->
-          <div class="d-flex align-items-center gap-2 ms-3">
-            <button
-              id="btnOpenLogin"
-              class="btn btn-outline-light btn-sm"
-              type="button"
-              data-bs-toggle="modal"
-              data-bs-target="#modalLogin"
-            >
-              <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar sesión
-            </button>
+          <!-- Auth / User area -->
+          <div id="authSection" class="d-flex align-items-center gap-2 ms-3">
+            <!-- Vista invitado -->
+            <div id="guestActions" class="d-flex align-items-center gap-2">
+              <button
+                id="btnOpenLogin"
+                class="btn btn-outline-light btn-sm"
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#modalLogin"
+              >
+                <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar sesión
+              </button>
 
-            <button
-              id="btnOpenRegister"
-              class="btn btn-light btn-sm"
-              type="button"
-              data-bs-toggle="modal"
-              data-bs-target="#modalRegister"
-            >
-              <i class="bi bi-person-plus me-1"></i> Registrarme
-            </button>
+              <button
+                id="btnOpenRegister"
+                class="btn btn-light btn-sm"
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#modalRegister"
+              >
+                <i class="bi bi-person-plus me-1"></i> Registrarme
+              </button>
+            </div>
+
+            <!-- Vista usuario autenticado -->
+            <div id="userActions" class="d-none align-items-center gap-2">
+              <a href="/pedidos.html" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-bag-check me-1"></i> Mis pedidos
+              </a>
+
+              <div
+                class="user-chip d-flex align-items-center gap-2 px-3 py-2 rounded-pill"
+              >
+                <i class="bi bi-person-circle"></i>
+                <span id="navUserName">Usuario</span>
+              </div>
+
+              <button
+                id="btnLogout"
+                class="btn btn-outline-danger btn-sm"
+                type="button"
+                title="Cerrar sesión"
+              >
+                <i class="bi bi-box-arrow-right"></i>
+              </button>
+            </div>
           </div>
           <a
             href="/carrito.html"
@@ -141,14 +167,15 @@
               <a href="./html/catalogo.html" class="btn btn-dark btn-lg"
                 >Ver catálogo</a
               >
+              <!--  
               <a
                 href="/drops.html"
                 class="btn btn-outline-dark text-muted btn-lg"
                 >Últimos drops</a
               >
+              -->
             </div>
             <div class="mt-4 d-flex flex-wrap gap-2">
-              <span class="badge rounded-pill trend">K-pop</span>
               <span class="badge rounded-pill trend">Indie MX</span>
               <span class="badge rounded-pill trend">Festivales</span>
               <span class="badge rounded-pill trend">Anime</span>
@@ -172,9 +199,7 @@
     <!-- Categorías rápidas -->
     <section class="py-4 bg-elev border-top border-bottom">
       <div class="container">
-        <div id="quickCategories" class="row text-center g-3">
-          <!-- JS inyecta categorías -->
-        </div>
+        <div id="quickCategories" class="row text-center g-3"></div>
       </div>
     </section>
 
@@ -229,6 +254,7 @@
     <footer class="py-5 bg-dark text-light">
       <div class="container">
         <div class="row g-4">
+          <!--  
           <div class="col-md-4">
             <h5 class="mb-3">TIENDA</h5>
             <p class="small text-white-50">
@@ -251,7 +277,7 @@
                 <a class="text-white-50 link-light" href="/faq.html">FAQ</a>
               </li>
             </ul>
-          </div>
+          </div>-->
           <div class="col-md-3">
             <h6>Soporte</h6>
             <ul class="list-unstyled small">
@@ -282,9 +308,19 @@
                 href="https://www.instagram.com/radioear__?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
                 ><i class="bi bi-instagram"></i
               ></a>
-              <a class="text-white-50" href="#"><i class="bi bi-tiktok"></i></a>
-              <a class="text-white-50" href="#"
-                ><i class="bi bi-facebook"></i
+              <a
+                class="text-white-50"
+                target="_blank"
+                rel="noopener noreferrer"
+                href="https://www.tiktok.com/@radioearr"
+                ><i class="bi bi-tiktok"></i
+              ></a>
+              <a
+                class="text-white-50"
+                target="_blank"
+                rel="noopener noreferrer"
+                href="https://wa.me/525513805023"
+                ><i class="bi bi-whatsapp"></i
               ></a>
             </div>
           </div>
@@ -294,7 +330,7 @@
           <span
             >© <span id="y"></span> Tienda. Todos los derechos reservados.</span
           >
-          <span>Hecho con ♥ en CDMX</span>
+          <!--    <span>Hecho con ♥ en CDMX</span>-->
         </div>
       </div>
     </footer>

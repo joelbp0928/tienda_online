@@ -223,3 +223,18 @@ body {
 .modal-backdrop.show {
   opacity: 0.75;
 }
+
+
+.user-chip {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.92rem;
+  max-width: 220px;
+}
+
+.user-chip span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
