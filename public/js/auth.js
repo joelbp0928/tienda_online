@@ -1,5 +1,6 @@
 // === AUTH UI (Login/Register) ===
 import supabase from './supabase-config.js';
+import { syncCartToDbIfClient } from "./carrito.js";
 
 function showToast(message) {
   const el = document.getElementById("appToast");
@@ -18,6 +19,8 @@ function setLoading(btn, isLoading, textLoading = "Procesando...") {
 }
 
 export async function initAuthState() {
+  const cachedCustomer = getCachedCustomer();
+
   const { data, error } = await supabase.auth.getSession();
 
   if (error) {
@@ -29,17 +32,20 @@ export async function initAuthState() {
   const session = data?.session ?? null;
 
   if (!session?.user) {
+    localStorage.removeItem("customer");
     updateAuthUI({ session: null, customer: null });
     return;
   }
 
+  updateAuthUI({ session, customer: cachedCustomer });
+
   const customer = await getCurrentCustomer(session.user);
 
   if (customer) {
-    sessionStorage.setItem("customer", JSON.stringify(customer));
+    localStorage.setItem("customer", JSON.stringify(customer));
   }
 
-  updateAuthUI({ session, customer });
+  updateAuthUI({ session, customer: customer || cachedCustomer });
 }
 
 export function initAuthModals() {
@@ -84,9 +90,11 @@ export function initAuthModals() {
 
       const customer = await getCurrentCustomer(data.user);
       if (customer) {
-        sessionStorage.setItem("customer", JSON.stringify(customer));
+        localStorage.setItem("customer", JSON.stringify(customer));
       }
       updateAuthUI({ session: data.session, customer });
+
+      await syncCartToDbIfClient({ replace: true });
 
       showToast("✅ Sesión iniciada correctamente");
       modalLogin.hide();
@@ -157,10 +165,12 @@ export function initAuthModals() {
       if (profileError) throw profileError;
       const customer = await getCurrentCustomer({ id: userId });
       if (customer) {
-        sessionStorage.setItem("customer", JSON.stringify(customer));
+        localStorage.setItem("customer", JSON.stringify(customer));
       }
       const { data: sessionData } = await supabase.auth.getSession();
       updateAuthUI({ session: sessionData?.session ?? null, customer });
+
+      await syncCartToDbIfClient({ replace: true });
 
       showToast("✅ Registro exitoso. ¡Ya puedes hacer pedidos!");
       modalRegister.hide();
@@ -237,7 +247,7 @@ export function initLogout() {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
-      sessionStorage.removeItem("customer");
+      localStorage.removeItem("customer");
       updateAuthUI({ session: null, customer: null });
       showToast("👋 Sesión cerrada");
     } catch (err) {
@@ -252,14 +262,22 @@ function watchAuthState() {
     if (session?.user) {
       const customer = await getCurrentCustomer(session.user);
       if (customer) {
-        sessionStorage.setItem("customer", JSON.stringify(customer));
+        localStorage.setItem("customer", JSON.stringify(customer));
       }
       updateAuthUI({ session, customer });
     } else {
-      sessionStorage.removeItem("customer");
+      localStorage.removeItem("customer");
       updateAuthUI({ session: null, customer: null });
     }
   });
+}
+
+export function getCachedCustomer() {
+  try {
+    return JSON.parse(localStorage.getItem("customer") || "null");
+  } catch {
+    return null;
+  }
 }
 
 export async function initAuth() {

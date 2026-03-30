@@ -2,8 +2,8 @@ import supabase from "./supabase-config.js";
 import "./chatBot.js";
 
 import { renderQuickCategories } from "./categories-ui.js";
-import { bindAddToCartButtons, updateCartBadge, syncCartToDbIfClient } from "./cart.js";
-import { initAuth } from "./auth.js";
+import { bindAddToCartButtons, updateCartBadge } from "./carrito.js";
+import { initAppShell } from "./app-shell.js";
 
 const money = cents => `$${(cents / 100).toFixed(2)} MXN`;
 
@@ -200,15 +200,12 @@ function setupSearch() {
   const list = await fetchAllProducts();
   renderProducts(list);
 
-  updateCartBadge();          // pinta el contador desde cache
-  bindAddToCartButtons();     // activa clicks en botones
-  await syncCartToDbIfClient(); // si ya está logeado como client, sincroniza
+  bindAddToCartButtons();
 
-  initAuth()
+  await initAppShell();
 
   setupSearch();
 
-  // Newsletter fake (dejas igual)
   const form = document.getElementById('formNews');
   if (form) {
     form.addEventListener('submit', () => {
