@@ -145,7 +145,7 @@ function renderProducts(list) {
     col.className = 'col-6 col-md-4 col-lg-3';
     col.innerHTML = `
   <div class="card h-100 card-product position-relative">
-    <a href="/html/producto.html?slug=${encodeURIComponent(p.slug)}" class="text-decoration-none text-light">
+    <a href="./html/producto.html?slug=${encodeURIComponent(p.slug)}" class="text-decoration-none text-light">
       <img class="card-img-top" src="${p.img}" alt="${p.name}" onerror="this.src='./img/demo-product.png'">
     </a>
 
@@ -156,7 +156,7 @@ function renderProducts(list) {
         <span class="price">${money(p.price)}</span>
 
         <div class="d-flex gap-2">
-          <a href="/html/producto.html?slug=${encodeURIComponent(p.slug)}" class="btn btn-sm btn-dark">Ver</a>
+          <a href="./html/producto.html?slug=${encodeURIComponent(p.slug)}" class="btn btn-sm btn-dark">Ver</a>
 
           <button
             class="btn btn-sm btn-outline-dark"

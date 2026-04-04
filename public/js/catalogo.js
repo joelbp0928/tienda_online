@@ -1,49 +1,67 @@
-import supabase from './supabase-config.js';
+import supabase from "./supabase-config.js";
 import "./chatBot.js";
+import { initAppShell } from "./app-shell.js";
 
-// Desktop con hover y puntero fino (mouse/trackpad)
-const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-const money = v => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v);
+const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+const money = (v) =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(v);
 
-// --- NUEVO: caché de imágenes por producto
-const imageCache = new Map(); // product_id -> [urls]
+const imageCache = new Map();
 
-async function fetchProducts(search = '') {
+async function fetchProducts(search = "") {
   let q = supabase
-    .from('public_catalog_grid')
-    .select('product_id, slug, name, price_from, variants_available, cover_url')
-    .order('product_id', { ascending: false });
+    .from("public_catalog_grid")
+    .select("product_id, slug, name, price_from, variants_available, cover_url")
+    .order("product_id", { ascending: false });
 
-  if (search) q = q.ilike('name', `%${search}%`);
+  if (search) q = q.ilike("name", `%${search}%`);
+
   const { data, error } = await q;
-  if (error) { console.error(error.message); return []; }
+  if (error) {
+    console.error(error.message);
+    return [];
+  }
   return data || [];
 }
 
-// resuelve URL de storage si guardaste solo la ruta
 const resolveCover = (url) => {
-  if (url && /^https?:\/\//i.test(url)) return url;           // ya es URL completa
-  if (url) return supabase.storage.from('products').getPublicUrl(url).data.publicUrl;
-  return '../img/demo-product.png'; // imagen por defecto
+  if (url && /^https?:\/\//i.test(url)) return url;
+  if (url) {
+    const clean = String(url).replace(/^products\//, "");
+    return supabase.storage.from("products").getPublicUrl(clean).data.publicUrl;
+  }
+  return "../img/demo-product.png";
 };
 
-// renderiza productos en el grid
 function render(list) {
-  const grid = document.getElementById('grid');
-  const empty = document.getElementById('empty');
-  grid.innerHTML = '';
-  if (!list.length) { empty.classList.remove('d-none'); return; }
-  empty.classList.add('d-none');
+  const grid = document.getElementById("grid");
+  const empty = document.getElementById("empty");
+
+  if (!grid || !empty) return;
+
+  grid.innerHTML = "";
+
+  if (!list.length) {
+    empty.classList.remove("d-none");
+    return;
+  }
+
+  empty.classList.add("d-none");
 
   for (const p of list) {
-    const col = document.createElement('div');
-    col.className = 'col-6 col-md-4 col-lg-3';
+    const col = document.createElement("div");
+    col.className = "col-6 col-md-4 col-lg-3";
     const img = resolveCover(p.cover_url);
 
     col.innerHTML = `
       <a href="producto.html?slug=${encodeURIComponent(p.slug)}" class="text-decoration-none text-light">
         <div class="card h-100">
-          <img src="${img}" class="card-img-top" alt="${p.name}" onerror="this.src='../img/demo-product.png'">
+          <img
+            src="${img}"
+            class="card-img-top"
+            alt="${p.name}"
+            onerror="this.src='../img/demo-product.png'"
+          >
           <div class="card-body d-flex flex-column">
             <h3 class="h6 mb-1">${p.name}</h3>
             <small class="text-secondary mb-2">
@@ -54,55 +72,59 @@ function render(list) {
             </div>
           </div>
         </div>
-      </a>`;
+      </a>
+    `;
     grid.appendChild(col);
 
-    // Listeners de hover (mouseenter / mouseleave)
-    const imgEl = col.querySelector('img.card-img-top');
+    if (!canHover) continue;
 
-    imgEl.addEventListener('mouseenter', async () => {
+    const imgEl = col.querySelector("img.card-img-top");
+    if (!imgEl) continue;
+
+    imgEl.dataset.baseSrc = img;
+
+    imgEl.addEventListener("mouseenter", async () => {
       const imgs = await fetchProductImages(p.product_id);
       if (imgs.length <= 1) return;
-      // asegura que la primera del arreglo sea la portada actual para que la rotación incluya la cover
+
       const base = imgEl.dataset.baseSrc;
-      let list = imgs;
-      if (base && !imgs.includes(base)) list = [base, ...imgs];
-      startHoverCycle(imgEl, list);
+      let listImgs = imgs;
+      if (base && !imgs.includes(base)) listImgs = [base, ...imgs];
+
+      startHoverCycle(imgEl, listImgs);
     });
 
-    imgEl.addEventListener('mouseleave', () => {
+    imgEl.addEventListener("mouseleave", () => {
       stopHoverCycle(imgEl);
     });
   }
 }
 
-// Trae hasta 6 imágenes ordenadas del producto
 async function fetchProductImages(productId) {
   if (imageCache.has(productId)) return imageCache.get(productId);
 
   const { data, error } = await supabase
-    .from('product_images')
-    .select('url')
-    .eq('product_id', productId)
-    .order('sort_order', { ascending: true })
-    .order('id', { ascending: true })
+    .from("product_images")
+    .select("url")
+    .eq("product_id", productId)
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true })
     .limit(6);
 
   if (error) {
-    console.error('Error cargando imágenes:', error.message);
-    imageCache.set(productId, []); // cachea vacío para evitar spams
+    console.error("Error cargando imágenes:", error.message);
+    imageCache.set(productId, []);
     return [];
   }
 
-  const urls = (data || []).map(r => resolveCover(r.url)).filter(Boolean);
+  const urls = (data || []).map((r) => resolveCover(r.url)).filter(Boolean);
   imageCache.set(productId, urls);
   return urls;
 }
-// ciclo de hover
-function startHoverCycle(imgEl, urls) {
-  if (!urls || urls.length <= 1) return; // nada que rotar
 
-  // evita dobles intervalos
+function startHoverCycle(imgEl, urls) {
+  if (!urls || urls.length <= 1) return;
+
   stopHoverCycle(imgEl);
 
   let i = 0;
@@ -112,17 +134,19 @@ function startHoverCycle(imgEl, urls) {
     i = (i + 1) % urls.length;
     const nextSrc = urls[i] || baseSrc;
 
-    // pequeño fade
-    imgEl.style.opacity = '0';
+    imgEl.style.opacity = "0";
     const swap = () => {
-      imgEl.removeEventListener('transitionend', swap);
+      imgEl.removeEventListener("transitionend", swap);
       imgEl.src = nextSrc;
-      // espera a que cargue para volver a 1 (si quieres evitar parpadeo)
-      const onLoad = () => { imgEl.style.opacity = '1'; imgEl.removeEventListener('load', onLoad); };
-      imgEl.addEventListener('load', onLoad);
+
+      const onLoad = () => {
+        imgEl.style.opacity = "1";
+        imgEl.removeEventListener("load", onLoad);
+      };
+      imgEl.addEventListener("load", onLoad);
     };
-    imgEl.addEventListener('transitionend', swap);
-  }, 680); // velocidad de rotación (ms)
+    imgEl.addEventListener("transitionend", swap);
+  }, 680);
 }
 
 function stopHoverCycle(imgEl) {
@@ -130,26 +154,43 @@ function stopHoverCycle(imgEl) {
     clearInterval(imgEl._hoverTimer);
     imgEl._hoverTimer = null;
   }
-  // regresa a la imagen base
   const base = imgEl.dataset.baseSrc;
   if (base) imgEl.src = base;
 }
 
-
-async function load(search = '') {
+async function load(search = "") {
   const data = await fetchProducts(search);
   render(data);
 }
 
-// eventos
-document.getElementById('btnSearch').addEventListener('click', () => {
-  const q = document.getElementById('q').value.trim();
-  load(q);
-});
+function setupSearch() {
+  const qInput = document.getElementById("q");
+  const searchInput = document.getElementById("searchInput");
 
-document.getElementById('q').addEventListener('keyup', (e) => {
-  if (e.key === 'Enter') document.getElementById('btnSearch').click();
-});
+  document.querySelectorAll("#btnSearch").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const q = (qInput?.value || searchInput?.value || "").trim();
+      load(q);
+    });
+  });
 
-// inicio
-load();
+  qInput?.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      const q = qInput.value.trim();
+      load(q);
+    }
+  });
+
+  searchInput?.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
+      const q = searchInput.value.trim();
+      load(q);
+    }
+  });
+}
+
+(async function init() {
+  await initAppShell();
+  setupSearch();
+  await load();
+})();
