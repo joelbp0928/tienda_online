@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mis pedidos | Tienda</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body class="bg-dark text-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-elev border-bottom sticky-top">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2 text-muted" href="../index.html">
+          <img id="brandLogo" src="../img/radioear.png" alt="Logo" height="28" />
+          <span id="brandName" class="fw-bold">TIENDA</span>
+        </a>
+
+        <button
+          class="navbar-toggler text-muted"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navMain"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div id="navMain" class="collapse navbar-collapse">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link text-light" href="../index.html">Inicio</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-light" href="./catalogo.html">Catálogo</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link activo" href="./pedidos.html">Mis pedidos</a>
+            </li>
+          </ul>
+
+          <form class="d-flex" role="search" onsubmit="return false;">
+            <input
+              id="searchInput"
+              class="form-control form-control-sm me-2"
+              type="search"
+              placeholder="Buscar diseño / evento"
+            />
+            <button class="btn btn-dark btn-sm" id="btnSearch" type="button">
+              <i class="bi bi-search"></i>
+            </button>
+          </form>
+
+          <div id="authSection" class="d-flex align-items-center gap-2 ms-3">
+            <div id="guestActions" class="d-flex align-items-center gap-2">
+              <button
+                id="btnOpenLogin"
+                class="btn btn-outline-light btn-sm"
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#modalLogin"
+              >
+                <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar sesión
+              </button>
+
+              <button
+                id="btnOpenRegister"
+                class="btn btn-light btn-sm"
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#modalRegister"
+              >
+                <i class="bi bi-person-plus me-1"></i> Registrarme
+              </button>
+            </div>
+
+            <div id="userActions" class="d-none align-items-center gap-2">
+              <a href="./pedidos.html" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-bag-check me-1"></i> Mis pedidos
+              </a>
+
+              <div class="user-chip d-flex align-items-center gap-2 px-3 py-2 rounded-pill">
+                <i class="bi bi-person-circle"></i>
+                <span id="navUserName">Usuario</span>
+              </div>
+
+              <button
+                id="btnLogout"
+                class="btn btn-outline-danger btn-sm"
+                type="button"
+                title="Cerrar sesión"
+              >
+                <i class="bi bi-box-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <a href="./carrito.html" class="btn btn-outline-dark text-muted btn-sm ms-3">
+            <i class="bi bi-bag"></i>
+            <span id="cartCount" class="badge text-bg-dark ms-1">0</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+          <h1 class="h3 mb-1">Mis pedidos</h1>
+          <p class="text-white-50 mb-0">Consulta el historial y detalle de tus compras.</p>
+        </div>
+
+        <div class="d-flex gap-2">
+          <a href="./catalogo.html" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left me-1"></i> Seguir comprando
+          </a>
+        </div>
+      </div>
+
+      <div id="ordersGuestState" class="d-none">
+        <div class="empty-state-card text-center py-5 px-4">
+          <i class="bi bi-person-lock fs-1 text-white-50 mb-3"></i>
+          <h2 class="h4 mb-2">Inicia sesión para ver tus pedidos</h2>
+          <p class="text-white-50 mb-4">
+            Tu historial de pedidos está disponible para clientes con sesión activa.
+          </p>
+          <button
+            class="btn btn-light"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#modalLogin"
+          >
+            Iniciar sesión
+          </button>
+        </div>
+      </div>
+
+      <div id="ordersLoading" class="text-center py-5">
+        <div class="spinner-border text-light mb-3" role="status"></div>
+        <div class="text-white-50">Cargando pedidos...</div>
+      </div>
+
+      <div id="ordersEmpty" class="d-none">
+        <div class="empty-state-card text-center py-5 px-4">
+          <i class="bi bi-bag-x fs-1 text-white-50 mb-3"></i>
+          <h2 class="h4 mb-2">Aún no tienes pedidos</h2>
+          <p class="text-white-50 mb-4">
+            Explora el catálogo y agrega tus productos favoritos para realizar tu primera compra.
+          </p>
+          <a href="./catalogo.html" class="btn btn-light">Ir al catálogo</a>
+        </div>
+      </div>
+
+      <div id="ordersList" class="d-flex flex-column gap-4">
+        <!-- JS -->
+      </div>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+      <div
+        id="appToast"
+        class="toast text-bg-dark border-0"
+        role="alert"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div id="appToastBody" class="toast-body">Listo.</div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Login -->
+    <div class="modal fade" id="modalLogin" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-elev text-light border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title">Iniciar sesión</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+
+          <form id="formLogin" autocomplete="on">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Correo</label>
+                <input
+                  id="loginEmail"
+                  type="email"
+                  class="form-control"
+                  placeholder="tu@email.com"
+                  required
+                />
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">Contraseña</label>
+                <input
+                  id="loginPassword"
+                  type="password"
+                  class="form-control"
+                  placeholder="********"
+                  required
+                  minlength="6"
+                />
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <button
+                  type="button"
+                  class="btn btn-link text-white-50 p-0"
+                  id="btnGoRegister"
+                >
+                  ¿No tienes cuenta? Regístrate
+                </button>
+                <button id="btnLoginSubmit" class="btn btn-light" type="submit">
+                  Entrar
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Register -->
+    <div class="modal fade" id="modalRegister" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-elev text-light border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title">Crear cuenta</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+
+          <form id="formRegister" autocomplete="on">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Nombre completo</label>
+                <input
+                  id="regFullName"
+                  type="text"
+                  class="form-control"
+                  placeholder="Tu nombre"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Teléfono</label>
+                <input
+                  id="regPhone"
+                  type="tel"
+                  class="form-control"
+                  placeholder="55 1234 5678"
+                  required
+                />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Correo</label>
+                <input
+                  id="regEmail"
+                  type="email"
+                  class="form-control"
+                  placeholder="tu@email.com"
+                  required
+                />
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">Contraseña</label>
+                <input
+                  id="regPassword"
+                  type="password"
+                  class="form-control"
+                  placeholder="Mínimo 6 caracteres"
+                  required
+                  minlength="6"
+                />
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <button
+                  type="button"
+                  class="btn btn-link text-white-50 p-0"
+                  id="btnGoLogin"
+                >
+                  ¿Ya tienes cuenta? Inicia sesión
+                </button>
+                <button id="btnRegisterSubmit" class="btn btn-light" type="submit">
+                  Registrarme
+                </button>
+              </div>
+
+              <div class="text-white-50 small mt-3">
+                Al registrarte podrás hacer pedidos y dar seguimiento a tus solicitudes.
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="../js/pedidos.js"></script>
+  </body>
+</html>

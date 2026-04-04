@@ -305,3 +305,46 @@ body {
     position: static;
   }
 }
+
+.order-card,
+.empty-state-card,
+.order-summary-box {
+  background: var(--elev);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+
+.order-card {
+  padding: 1.25rem;
+}
+
+.order-card-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.order-item-row {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.85rem;
+  padding: 0.9rem;
+}
+
+.order-summary-box {
+  padding: 1rem;
+  height: 100%;
+}
+
+.order-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.9rem;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.empty-state-card {
+  background: var(--elev);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
