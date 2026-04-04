@@ -219,10 +219,9 @@ function bindCartPageEvents() {
 }
 
 (async function initCarritoPage() {
-  document.title = "Carrito | RadioEar";
+  document.title = "Carrito";
 
   await initAppShell();
-  await mergeGuestCartOnLogin();
 
   bindCartPageEvents();
   await renderCartPage();

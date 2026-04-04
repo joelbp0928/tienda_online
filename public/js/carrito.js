@@ -240,7 +240,7 @@ export async function syncCartToDbIfClient({ replace = false } = {}) {
 
   const { error } = await supabase
     .from("cart_items")
-    .upsert(rows, { onConflict: "customer_id,session_id,product_id,variant_id" });
+    .upsert(rows, { onConflict: "customer_id,product_id,variant_id" });
 
   if (error) {
     console.warn("sync cart error:", error.message);
@@ -249,7 +249,7 @@ export async function syncCartToDbIfClient({ replace = false } = {}) {
 
 export async function hydrateLocalFromDbIfClient() {
   const user = await getAuthUser();
-  if (!user) return;  
+  if (!user) return;
 
   const okClient = await isClientLogged();
   if (!okClient) return;
@@ -339,7 +339,6 @@ export async function initCartPersistence() {
 
   if (session?.user) {
     await hydrateLocalFromDbIfClient();
-    await syncCartToDbIfClient();
   }
 
   updateCartBadge();
