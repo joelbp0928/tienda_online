@@ -3,7 +3,7 @@ import supabase from "./supabase-config.js";
 const CART_KEY = "cart_v1";
 const SESSION_KEY = "cart_session_id";
 
-function toast(message) {
+function showToast(message) {
   const el = document.getElementById("appToast");
   const body = document.getElementById("appToastBody");
   if (!el || !body || typeof bootstrap === "undefined") return;
@@ -143,14 +143,14 @@ export function bindAddToCartButtons(root = document) {
       await addToCart({ product_id, variant_id, quantity });
       updateCartBadge();
       btn.innerHTML = `<i class="fa-solid fa-check me-1"></i> Agregado`;
-      toast("Producto agregado al carrito");
+      showToast("Producto agregado al carrito");
       setTimeout(() => {
         btn.innerHTML = prev;
       }, 900);
     } catch (err) {
       console.warn(err);
       btn.innerHTML = prev;
-      toast("No se pudo agregar al carrito");
+      showToast("No se pudo agregar al carrito");
     } finally {
       btn.disabled = false;
     }
@@ -185,9 +185,19 @@ async function getMyRole() {
 
 export async function isClientLogged() {
   const user = await getAuthUser();
-  if (!user) return false;
+  if (!user) {
+    showToast("❌ Debes iniciar sesión como cliente para comprar");
+    return false;
+  }
+  
   const role = await getMyRole();
-  return role === "client";
+  
+  if (role !== "client") {
+    showToast("❌ Solo se puede comprar con rol de cliente");
+    return false;
+  }
+  
+  return true;
 }
 
 async function clearDbCartIfClient() {

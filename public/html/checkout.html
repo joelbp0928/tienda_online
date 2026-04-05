@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Checkout | RadioEar</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body class="bg-dark text-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-elev border-bottom sticky-top">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2 text-muted" href="../index.html">
+          <img id="brandLogo" src="../img/radioear.png" alt="Logo" height="28" />
+          <span id="brandName" class="fw-bold">TIENDA</span>
+        </a>
+
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <a href="./carrito.html" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Volver al carrito
+          </a>
+          <a href="./carrito.html" class="btn btn-outline-dark text-muted btn-sm">
+            <i class="bi bi-bag"></i>
+            <span id="cartCount" class="badge text-bg-dark ms-1">0</span>
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="py-5">
+      <div class="container">
+        <div class="mb-4">
+          <h1 class="h3 mb-1">Finalizar compra</h1>
+          <p class="text-white-50 mb-0">
+            Agenda tu entrega y selecciona tu forma de pago.
+          </p>
+        </div>
+
+        <div class="row g-4">
+          <!-- Columna izquierda -->
+          <div class="col-lg-8">
+            <!-- Entrega -->
+            <section class="cart-summary-card mb-4">
+              <h2 class="h5 mb-3">1. Método de entrega</h2>
+
+              <div class="mb-3">
+                <label class="form-label">Tipo de entrega</label>
+                <select id="deliveryMethod" class="form-select">
+                  <option value="scheduled_delivery">Entrega programada</option>
+                  <option value="pickup_point">Punto medio / acordar con cliente</option>
+                </select>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Fecha de entrega</label>
+                  <input
+                    id="deliveryDate"
+                    type="date"
+                    class="form-control"
+                    min=""
+                  />
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Horario disponible</label>
+                  <select id="deliverySlot" class="form-select">
+                    <option value="">Selecciona fecha primero</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <label class="form-label">Notas para la entrega</label>
+                <textarea
+                  id="deliveryNotes"
+                  class="form-control"
+                  rows="3"
+                  placeholder="Ej. entregar después de las 6 pm, llamar antes de llegar, etc."
+                ></textarea>
+              </div>
+
+              <div class="small text-white-50 mt-3" id="slotAvailabilityHint">
+                Selecciona una fecha para ver horarios disponibles.
+              </div>
+            </section>
+
+            <!-- Pago -->
+            <section class="cart-summary-card mb-4">
+              <h2 class="h5 mb-3">2. Forma de pago</h2>
+
+              <div class="vstack gap-3">
+                <label class="payment-option">
+                  <input type="radio" name="paymentPlan" value="card_full" checked />
+                  <span>
+                    <strong>Pago completo con tarjeta</strong><br />
+                    <small class="text-white-50">Liquidación total en línea</small>
+                  </span>
+                </label>
+
+                <label class="payment-option">
+                  <input type="radio" name="paymentPlan" value="card_partial" />
+                  <span>
+                    <strong>50% anticipo con tarjeta</strong><br />
+                    <small class="text-white-50">Resto contra entrega: efectivo, tarjeta o transferencia</small>
+                  </span>
+                </label>
+
+                <label class="payment-option">
+                  <input type="radio" name="paymentPlan" value="transfer_full" />
+                  <span>
+                    <strong>Pago completo por transferencia</strong><br />
+                    <small class="text-white-50">Se requiere subir comprobante</small>
+                  </span>
+                </label>
+
+                <label class="payment-option">
+                  <input type="radio" name="paymentPlan" value="transfer_partial" />
+                  <span>
+                    <strong>50% por transferencia</strong><br />
+                    <small class="text-white-50">Resto contra entrega</small>
+                  </span>
+                </label>
+              </div>
+
+              <div id="transferBox" class="mt-4 d-none">
+                <div class="alert alert-secondary bg-dark border-secondary text-light mb-3">
+                  <div><strong>Datos para transferencia</strong></div>
+                  <div class="small mt-2">
+                    Banco: BBVA<br />
+                    Cuenta: **** **** **** 1234<br />
+                    CLABE: 012345678901234567<br />
+                    Beneficiario: NOMBRE DEL NEGOCIO
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Subir comprobante</label>
+                  <input
+                    id="transferProof"
+                    type="file"
+                    class="form-control"
+                    accept="image/*,.pdf"
+                  />
+                </div>
+
+                <div class="small text-white-50">
+                  Formatos permitidos: JPG, PNG o PDF.
+                </div>
+              </div>
+
+              <div id="cardBox" class="mt-4">
+                <div class="alert alert-secondary bg-dark border-secondary text-light mb-0">
+                  Aquí irá la integración con pasarela de pago segura.
+                </div>
+              </div>
+            </section>
+
+            <!-- Contacto -->
+            <section class="cart-summary-card">
+              <h2 class="h5 mb-3">3. Datos de contacto</h2>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Nombre completo</label>
+                  <input id="customerName" type="text" class="form-control" />
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Teléfono</label>
+                  <input id="customerPhone" type="tel" class="form-control" />
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Dirección / referencia</label>
+                  <textarea
+                    id="customerAddress"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Calle, colonia, alcaldía, referencias..."
+                  ></textarea>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Columna derecha -->
+          <div class="col-lg-4">
+            <div class="cart-summary-card position-sticky" style="top: 96px">
+              <h2 class="h5 mb-3">Resumen del pedido</h2>
+
+              <div id="checkoutItems" class="d-flex flex-column gap-3 mb-3"></div>
+
+              <hr class="border-secondary" />
+
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-white-50">Productos</span>
+                <span id="summaryItems">0</span>
+              </div>
+
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-white-50">Subtotal</span>
+                <span id="summarySubtotal">$0.00 MXN</span>
+              </div>
+
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-white-50">Anticipo requerido</span>
+                <span id="summaryDeposit">$0.00 MXN</span>
+              </div>
+
+              <hr class="border-secondary" />
+
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <strong>Total</strong>
+                <strong id="summaryTotal">$0.00 MXN</strong>
+              </div>
+
+              <button id="btnPlaceOrder" class="btn btn-light w-100">
+                <i class="bi bi-check-circle me-1"></i> Confirmar pedido
+              </button>
+
+              <div class="small text-white-50 mt-3">
+                El pedido quedará sujeto a disponibilidad del horario elegido.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
+      <div id="appToast" class="toast text-bg-dark border-0" role="alert" aria-live="polite" aria-atomic="true">
+        <div class="d-flex">
+          <div id="appToastBody" class="toast-body">Listo.</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="../js/checkout-page.js"></script>
+  </body>
+</html>

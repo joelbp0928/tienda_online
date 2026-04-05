@@ -214,7 +214,7 @@ function bindCartPageEvents() {
       return;
     }
 
-    window.location.href = "/checkout.html";
+    window.location.href = "./checkout.html";
   });
 }
 
