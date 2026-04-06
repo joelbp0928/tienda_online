@@ -2,8 +2,11 @@ import {
   initCollectionsUI, listCollections, setCollectionsChangedCallback,
   loadCollectionsSelect, getProductCollectionIds, setProductCollections
 } from './colecciones.js';
+
 import supabase from '../js/supabase-config.js';
 import { listCategories } from './categorias.js';
+
+import { initEntregasUI } from './entregas.js';
 
 let meId = null, myRole = null;
 let CAN_EDIT = true;
@@ -58,6 +61,9 @@ async function requireAdmin() {
   if (myRole !== 'staff') await listUsers();
   await listProducts();
   await listCategories();
+  await initEntregasUI();
+  initCollectionsUI();
+  await listCollections();
 })();
 
 // ---- UI helpers ----
@@ -403,9 +409,6 @@ setCollectionsChangedCallback(async () => {
   const sel = document.getElementById('prodCollections');
   if (sel) await loadCollectionsSelect(sel);
 });
-
-initCollectionsUI();
-await listCollections();
 
 const settingsModal = new bootstrap.Modal(document.getElementById('modalStoreSettings'));
 const DEMO = '../img/demo-product.png';

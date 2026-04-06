@@ -20,10 +20,20 @@
     <link rel="stylesheet" href="../css/style.css" />
   </head>
   <body class="bg-dark text-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-elev border-bottom sticky-top">
+    <nav
+      class="navbar navbar-expand-lg navbar-dark bg-elev border-bottom sticky-top"
+    >
       <div class="container">
-        <a class="navbar-brand d-flex align-items-center gap-2 text-muted" href="../index.html">
-          <img id="brandLogo" src="../img/radioear.png" alt="Logo" height="28" />
+        <a
+          class="navbar-brand d-flex align-items-center gap-2 text-muted"
+          href="../index.html"
+        >
+          <img
+            id="brandLogo"
+            src="../img/radioear.png"
+            alt="Logo"
+            height="28"
+          />
           <span id="brandName" class="fw-bold">TIENDA</span>
         </a>
 
@@ -31,7 +41,10 @@
           <a href="./carrito.html" class="btn btn-outline-light btn-sm">
             <i class="bi bi-arrow-left me-1"></i> Volver al carrito
           </a>
-          <a href="./carrito.html" class="btn btn-outline-dark text-muted btn-sm">
+          <a
+            href="./carrito.html"
+            class="btn btn-outline-dark text-muted btn-sm"
+          >
             <i class="bi bi-bag"></i>
             <span id="cartCount" class="badge text-bg-dark ms-1">0</span>
           </a>
@@ -59,11 +72,20 @@
                 <label class="form-label">Tipo de entrega</label>
                 <select id="deliveryMethod" class="form-select">
                   <option value="scheduled_delivery">Entrega programada</option>
-                  <option value="pickup_point">Punto medio / acordar con cliente</option>
+                  <option value="pickup_point">
+                    Punto medio / acordar con cliente
+                  </option>
                 </select>
               </div>
 
               <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Punto de entrega</label>
+                  <select id="deliveryPoint" class="form-select">
+                    <option value="">Selecciona un punto de entrega</option>
+                  </select>
+                </div>
+
                 <div class="col-md-6">
                   <label class="form-label">Fecha de entrega</label>
                   <input
@@ -76,8 +98,8 @@
 
                 <div class="col-md-6">
                   <label class="form-label">Horario disponible</label>
-                  <select id="deliverySlot" class="form-select">
-                    <option value="">Selecciona fecha primero</option>
+                  <select id="deliverySlot" class="form-select" disabled>
+                    <option value="">Selecciona punto y fecha primero</option>
                   </select>
                 </div>
               </div>
@@ -103,10 +125,17 @@
 
               <div class="vstack gap-3">
                 <label class="payment-option">
-                  <input type="radio" name="paymentPlan" value="card_full" checked />
+                  <input
+                    type="radio"
+                    name="paymentPlan"
+                    value="card_full"
+                    checked
+                  />
                   <span>
                     <strong>Pago completo con tarjeta</strong><br />
-                    <small class="text-white-50">Liquidación total en línea</small>
+                    <small class="text-white-50"
+                      >Liquidación total en línea</small
+                    >
                   </span>
                 </label>
 
@@ -114,20 +143,33 @@
                   <input type="radio" name="paymentPlan" value="card_partial" />
                   <span>
                     <strong>50% anticipo con tarjeta</strong><br />
-                    <small class="text-white-50">Resto contra entrega: efectivo, tarjeta o transferencia</small>
+                    <small class="text-white-50"
+                      >Resto contra entrega: efectivo, tarjeta o
+                      transferencia</small
+                    >
                   </span>
                 </label>
 
                 <label class="payment-option">
-                  <input type="radio" name="paymentPlan" value="transfer_full" />
+                  <input
+                    type="radio"
+                    name="paymentPlan"
+                    value="transfer_full"
+                  />
                   <span>
                     <strong>Pago completo por transferencia</strong><br />
-                    <small class="text-white-50">Se requiere subir comprobante</small>
+                    <small class="text-white-50"
+                      >Se requiere subir comprobante</small
+                    >
                   </span>
                 </label>
 
                 <label class="payment-option">
-                  <input type="radio" name="paymentPlan" value="transfer_partial" />
+                  <input
+                    type="radio"
+                    name="paymentPlan"
+                    value="transfer_partial"
+                  />
                   <span>
                     <strong>50% por transferencia</strong><br />
                     <small class="text-white-50">Resto contra entrega</small>
@@ -136,7 +178,9 @@
               </div>
 
               <div id="transferBox" class="mt-4 d-none">
-                <div class="alert alert-secondary bg-dark border-secondary text-light mb-3">
+                <div
+                  class="alert alert-secondary bg-dark border-secondary text-light mb-3"
+                >
                   <div><strong>Datos para transferencia</strong></div>
                   <div class="small mt-2">
                     Banco: BBVA<br />
@@ -162,7 +206,9 @@
               </div>
 
               <div id="cardBox" class="mt-4">
-                <div class="alert alert-secondary bg-dark border-secondary text-light mb-0">
+                <div
+                  class="alert alert-secondary bg-dark border-secondary text-light mb-0"
+                >
                   Aquí irá la integración con pasarela de pago segura.
                 </div>
               </div>
@@ -201,7 +247,10 @@
             <div class="cart-summary-card position-sticky" style="top: 96px">
               <h2 class="h5 mb-3">Resumen del pedido</h2>
 
-              <div id="checkoutItems" class="d-flex flex-column gap-3 mb-3"></div>
+              <div
+                id="checkoutItems"
+                class="d-flex flex-column gap-3 mb-3"
+              ></div>
 
               <hr class="border-secondary" />
 
@@ -222,7 +271,9 @@
 
               <hr class="border-secondary" />
 
-              <div class="d-flex justify-content-between align-items-center mb-4">
+              <div
+                class="d-flex justify-content-between align-items-center mb-4"
+              >
                 <strong>Total</strong>
                 <strong id="summaryTotal">$0.00 MXN</strong>
               </div>
@@ -241,11 +292,24 @@
     </main>
 
     <!-- Toast -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100">
-      <div id="appToast" class="toast text-bg-dark border-0" role="alert" aria-live="polite" aria-atomic="true">
+    <div
+      class="toast-container position-fixed bottom-0 end-0 p-3"
+      style="z-index: 1100"
+    >
+      <div
+        id="appToast"
+        class="toast text-bg-dark border-0"
+        role="alert"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         <div class="d-flex">
           <div id="appToastBody" class="toast-body">Listo.</div>
-          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
         </div>
       </div>
     </div>

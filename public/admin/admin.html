@@ -13,7 +13,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
       rel="stylesheet"
     />
-        <!-- Styles -->
+    <!-- Styles -->
     <link rel="stylesheet" href="../css/adminstyle.css" />
   </head>
   <body class="bg-dark text-light">
@@ -86,6 +86,28 @@
                 </button>
               </div>
               <div id="collections" class="mt-3"></div>
+            </div>
+          </div>
+          <div class="card bg-black border-secondary mt-4">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <h2 class="h5 mb-0 text-light">Entregas</h2>
+                <div class="d-flex gap-2">
+                  <button id="btnNewDeliveryPoint" class="btn btn-sm btn-light">
+                    Punto +
+                  </button>
+                  <button
+                    id="btnNewDeliverySlot"
+                    class="btn btn-sm btn-outline-light"
+                  >
+                    Horario +
+                  </button>
+                </div>
+              </div>
+
+              <div id="deliveryPoints" class="mt-3"></div>
+              <hr class="border-secondary" />
+              <div id="deliverySlots" class="mt-3"></div>
             </div>
           </div>
         </div>
@@ -537,6 +559,234 @@
           </form>
         </div>
       </div>
+
+      <!-- Modal: Crear/Editar punto de entrega -->
+      <div
+        class="modal fade"
+        id="modalDeliveryPoint"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <form
+            class="modal-content bg-black text-light"
+            id="formDeliveryPoint"
+          >
+            <div class="modal-header border-secondary">
+              <h5 class="modal-title" id="titleDeliveryPoint">
+                Nuevo punto de entrega
+              </h5>
+              <button
+                type="button"
+                class="btn-close btn-close-white"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+
+            <div class="modal-body vstack gap-3">
+              <input type="hidden" id="deliveryPointId" />
+
+              <div>
+                <label class="form-label">Nombre del punto</label>
+                <input
+                  class="form-control"
+                  id="deliveryPointName"
+                  placeholder="Ej. Metro Tacuba línea 7"
+                  required
+                />
+              </div>
+
+              <div>
+                <label class="form-label">Descripción</label>
+                <textarea
+                  class="form-control"
+                  id="deliveryPointDescription"
+                  rows="2"
+                  placeholder="Ej. Salida principal, junto al puesto de periódicos"
+                ></textarea>
+              </div>
+
+              <div>
+                <label class="form-label">Referencia / dirección corta</label>
+                <input
+                  class="form-control"
+                  id="deliveryPointReference"
+                  placeholder="Ej. Andén dirección El Rosario"
+                />
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Orden</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    class="form-control"
+                    id="deliveryPointSortOrder"
+                    value="0"
+                  />
+                  <div class="form-text text-secondary">
+                    Menor número = aparece primero.
+                  </div>
+                </div>
+
+                <div class="col-md-6 d-flex align-items-end">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="deliveryPointActive"
+                      checked
+                    />
+                    <label class="form-check-label" for="deliveryPointActive">
+                      Activo
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer border-secondary">
+              <button
+                type="button"
+                class="btn btn-outline-light"
+                data-bs-dismiss="modal"
+              >
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-light">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Modal: Crear/Editar horario de entrega -->
+      <div
+        class="modal fade"
+        id="modalDeliverySlot"
+        tabindex="-1"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <form class="modal-content bg-black text-light" id="formDeliverySlot">
+            <div class="modal-header border-secondary">
+              <h5 class="modal-title" id="titleDeliverySlot">
+                Nuevo horario de entrega
+              </h5>
+              <button
+                type="button"
+                class="btn-close btn-close-white"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+
+            <div class="modal-body vstack gap-3">
+              <input type="hidden" id="deliverySlotId" />
+
+              <div>
+                <label class="form-label">Punto de entrega</label>
+                <select class="form-select" id="deliverySlotPoint" required>
+                  <option value="">Selecciona un punto</option>
+                </select>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Fecha</label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="deliverySlotDate"
+                    required
+                  />
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Cupo</label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    class="form-control"
+                    id="deliverySlotCapacity"
+                    value="1"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Hora inicio</label>
+                  <input
+                    type="time"
+                    class="form-control"
+                    id="deliverySlotStart"
+                    required
+                  />
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label">Hora fin</label>
+                  <input
+                    type="time"
+                    class="form-control"
+                    id="deliverySlotEnd"
+                  />
+                  <div class="form-text text-secondary">
+                    Opcional. Puedes dejarla vacía si solo manejarás una hora
+                    exacta.
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Reservados</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    class="form-control"
+                    id="deliverySlotReserved"
+                    value="0"
+                  />
+                  <div class="form-text text-secondary">
+                    Normalmente empieza en 0.
+                  </div>
+                </div>
+
+                <div class="col-md-6 d-flex align-items-end">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="deliverySlotActive"
+                      checked
+                    />
+                    <label class="form-check-label" for="deliverySlotActive">
+                      Activo
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer border-secondary">
+              <button
+                type="button"
+                class="btn btn-outline-light"
+                data-bs-dismiss="modal"
+              >
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-light">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
     </main>
 
     <script type="module" src="./admin.js"></script>

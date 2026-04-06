@@ -1,6 +1,6 @@
 import supabase from "./supabase-config.js";
 import { initAppShell } from "./app-shell.js";
-import { fetchCartDetails, getCartCount, isClientLogged, updateCartBadge } from "./carrito.js";
+import { fetchCartDetails, isClientLogged, updateCartBadge } from "./carrito.js";
 
 const DEMO_IMG = "../img/demo-product.png";
 
@@ -23,61 +23,6 @@ function setMinDate() {
   const now = new Date();
   now.setDate(now.getDate() + 1); // desde mañana
   input.min = now.toISOString().split("T")[0];
-}
-
-function getMockSlots(dateStr) {
-  if (!dateStr) return [];
-
-  const base = [
-    { value: "11:00-13:00", label: "11:00 AM - 1:00 PM", available: true },
-    { value: "13:00-15:00", label: "1:00 PM - 3:00 PM", available: true },
-    { value: "15:00-17:00", label: "3:00 PM - 5:00 PM", available: false },
-    { value: "17:00-19:00", label: "5:00 PM - 7:00 PM", available: true },
-    { value: "19:00-21:00", label: "7:00 PM - 9:00 PM", available: false },
-  ];
-
-  const day = new Date(`${dateStr}T12:00:00`).getDay();
-
-  if (day === 0) {
-    return base.map((x, i) => ({
-      ...x,
-      available: i < 3
-    }));
-  }
-
-  return base;
-}
-
-function renderSlots(dateStr) {
-  const select = document.getElementById("deliverySlot");
-  const hint = document.getElementById("slotAvailabilityHint");
-  if (!select || !hint) return;
-
-  const slots = getMockSlots(dateStr);
-
-  if (!dateStr) {
-    select.innerHTML = `<option value="">Selecciona fecha primero</option>`;
-    hint.textContent = "Selecciona una fecha para ver horarios disponibles.";
-    return;
-  }
-
-  select.innerHTML = `<option value="">Selecciona un horario</option>`;
-
-  slots.forEach((slot) => {
-    const option = document.createElement("option");
-    option.value = slot.available ? slot.value : "";
-    option.disabled = !slot.available;
-    option.textContent = slot.available
-      ? slot.label
-      : `${slot.label} — No disponible`;
-    select.appendChild(option);
-  });
-
-  const availableCount = slots.filter((x) => x.available).length;
-  hint.textContent =
-    availableCount > 0
-      ? `Hay ${availableCount} horarios disponibles para esta fecha.`
-      : "No hay horarios disponibles en esta fecha.";
 }
 
 function getSelectedPaymentPlan() {
@@ -158,10 +103,10 @@ function bindEvents(items) {
   const dateInput = document.getElementById("deliveryDate");
   const paymentRadios = document.querySelectorAll('input[name="paymentPlan"]');
   const btnPlaceOrder = document.getElementById("btnPlaceOrder");
+  const pointSelect = document.getElementById("deliveryPoint");
 
-  dateInput?.addEventListener("change", () => {
-    renderSlots(dateInput.value);
-  });
+  pointSelect?.addEventListener("change", renderSlotsFromDb);
+  dateInput?.addEventListener("change", renderSlotsFromDb);
 
   paymentRadios.forEach((radio) => {
     radio.addEventListener("change", () => {
@@ -201,9 +146,8 @@ async function submitOrder(items) {
     return;
   }
 
-  const deliveryMethod = document.getElementById("deliveryMethod")?.value || "";
-  const deliveryDate = document.getElementById("deliveryDate")?.value || "";
-  const deliverySlot = document.getElementById("deliverySlot")?.value || "";
+  const deliveryPointId = document.getElementById("deliveryPoint")?.value || "";
+  const deliverySlotId = document.getElementById("deliverySlot")?.value || "";
   const deliveryNotes = document.getElementById("deliveryNotes")?.value?.trim() || "";
   const customerName = document.getElementById("customerName")?.value?.trim() || "";
   const customerPhone = document.getElementById("customerPhone")?.value?.trim() || "";
@@ -211,8 +155,9 @@ async function submitOrder(items) {
   const paymentPlan = getSelectedPaymentPlan();
   const proofFile = document.getElementById("transferProof")?.files?.[0] || null;
 
+  if (!deliveryPointId) return toast("Selecciona un punto de entrega");
   if (!deliveryDate) return toast("Selecciona una fecha de entrega");
-  if (!deliverySlot) return toast("Selecciona un horario disponible");
+  if (!deliverySlotId) return toast("Selecciona un horario disponible");
   if (!customerName || !customerPhone) return toast("Completa tus datos de contacto");
 
   const requiresProof = paymentPlan === "transfer_full" || paymentPlan === "transfer_partial";
@@ -252,8 +197,9 @@ async function submitOrder(items) {
   const orderPayload = {
     customer_id: user.id,
     delivery_method: deliveryMethod,
+    delivery_point_id: Number(deliveryPointId),
+    delivery_slot_id: Number(deliverySlotId),
     delivery_date: deliveryDate,
-    delivery_slot: deliverySlot,
     delivery_notes: deliveryNotes,
     payment_plan: paymentPlan,
     payment_status: paymentStatusMap[paymentPlan] || "pending",
@@ -303,6 +249,91 @@ async function submitOrder(items) {
   setTimeout(() => {
     window.location.href = "/html/pedidos.html";
   }, 1000);
+}
+
+async function loadDeliveryPoints() {
+  const select = document.getElementById("deliveryPoint");
+  if (!select) return;
+
+  const { data, error } = await supabase
+    .from("delivery_points")
+    .select("id, name, description, address_reference")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("id", { ascending: true });
+
+  if (error) {
+    console.warn(error);
+    return;
+  }
+
+  select.innerHTML = `<option value="">Selecciona un punto de entrega</option>`;
+
+  (data || []).forEach((point) => {
+    const option = document.createElement("option");
+    option.value = point.id;
+    option.textContent = point.address_reference
+      ? `${point.name} — ${point.address_reference}`
+      : point.name;
+    select.appendChild(option);
+  });
+}
+
+async function renderSlotsFromDb() {
+  const pointId = document.getElementById("deliveryPoint")?.value || "";
+  const dateStr = document.getElementById("deliveryDate")?.value || "";
+  const select = document.getElementById("deliverySlot");
+  const hint = document.getElementById("slotAvailabilityHint");
+
+  if (!select || !hint) return;
+
+  if (!pointId || !dateStr) {
+    select.disabled = true;
+    select.innerHTML = `<option value="">Selecciona punto y fecha primero</option>`;
+    hint.textContent = "Selecciona un punto y una fecha para ver horarios disponibles.";
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("delivery_slots")
+    .select("id, slot_date, start_time, end_time, capacity, reserved_count")
+    .eq("delivery_point_id", pointId)
+    .eq("slot_date", dateStr)
+    .eq("is_active", true)
+    .order("start_time", { ascending: true });
+
+  if (error) {
+    console.warn(error);
+    select.disabled = true;
+    select.innerHTML = `<option value="">No se pudieron cargar horarios</option>`;
+    hint.textContent = "Ocurrió un problema al consultar disponibilidad.";
+    return;
+  }
+
+  const available = (data || []).filter(
+    (slot) => Number(slot.reserved_count || 0) < Number(slot.capacity || 0)
+  );
+
+  select.disabled = false;
+  select.innerHTML = `<option value="">Selecciona un horario</option>`;
+
+  if (!available.length) {
+    select.innerHTML = `<option value="">Sin horarios disponibles</option>`;
+    select.disabled = true;
+    hint.textContent = "No hay horarios disponibles para esta fecha y punto.";
+    return;
+  }
+
+  available.forEach((slot) => {
+    const option = document.createElement("option");
+    option.value = slot.id;
+    option.textContent = slot.end_time
+      ? `${slot.start_time.slice(0, 5)} - ${slot.end_time.slice(0, 5)}`
+      : `${slot.start_time.slice(0, 5)}`;
+    select.appendChild(option);
+  });
+
+  hint.textContent = `Hay ${available.length} horario(s) disponibles para este punto de entrega.`;
 }
 
 (async function init() {
